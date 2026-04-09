@@ -1,515 +1,988 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Spelling Rules</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #f0f9ff;
-        }
-        .catchy-phrase {
-            background-image: linear-gradient(to right, #ffedd5, #fef3c7);
-        }
-        /* Class สำหรับซ่อนหน้า */
-        .page-hidden {
-            display: none;
-        }
-        /* อนิเมชั่นตอนเปลี่ยนหน้า */
-        .fade-in {
-            animation: fadeIn 0.4s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* ปุ่มลำโพง */
-        .btn-speak {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #e0f2fe;
-            color: #0369a1;
-            border-radius: 9999px;
-            padding: 0.25rem 0.5rem;
-            font-size: 0.875rem;
-            margin-left: 0.5rem;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid #bae6fd;
-        }
-        .btn-speak:hover {
-            background-color: #bae6fd;
-            transform: scale(1.1);
-        }
-        .btn-speak:active {
-            transform: scale(0.95);
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌾 Spelling Rules Farm 🌾</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --barn-red: #c0392b;
+    --wood-dark: #6b3a2a;
+    --wood-mid: #8b5e3c;
+    --wood-light: #c8956c;
+    --straw: #f5e6c8;
+    --straw-dark: #e8d5a3;
+    --green-field: #4a7c59;
+    --green-light: #7ab648;
+    --amber: #d4870e;
+    --dirt: #8b6914;
+    --sky: #a8d8ea;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Nunito', sans-serif;
+    background-color: var(--straw);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(210,185,130,0.18) 40px, rgba(210,185,130,0.18) 41px),
+      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(210,185,130,0.18) 40px, rgba(210,185,130,0.18) 41px);
+    min-height: 100vh;
+  }
+  h1, h2, h3, .fredoka { font-family: 'Fredoka One', cursive; }
+
+  /* Wood plank texture */
+  .wood-plank {
+    background: linear-gradient(135deg, #8b5e3c 0%, #a0714f 25%, #7a5230 50%, #9a6845 75%, #8b5e3c 100%);
+    border: 3px solid #5a3a22;
+    box-shadow: 0 4px 0 #4a2a12, 0 6px 12px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .wood-plank::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(255,255,255,0.04) 20px, rgba(255,255,255,0.04) 21px);
+    pointer-events: none;
+  }
+
+  /* Barn board */
+  .barn-board {
+    background: linear-gradient(180deg, #c0392b 0%, #a93226 50%, #c0392b 100%);
+    border: 3px solid #7b241c;
+    box-shadow: 0 4px 0 #5b1510, 0 6px 16px rgba(0,0,0,0.4);
+    position: relative;
+  }
+
+  /* Seed bag style */
+  .seed-bag {
+    background: linear-gradient(135deg, #8b7355 0%, #a08060 50%, #7a6040 100%);
+    border: 3px solid #5a4030;
+    border-radius: 12px 12px 16px 16px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    transition: all 0.15s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .seed-bag::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 8px;
+    background: #6a4f35;
+    border-radius: 8px 8px 0 0;
+  }
+  .seed-bag:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 16px rgba(0,0,0,0.4); }
+  .seed-bag:active { transform: translateY(1px); }
+  .seed-bag.correct { background: linear-gradient(135deg, #4a7c59, #3a6b48) !important; border-color: #2a5030 !important; }
+  .seed-bag.wrong { background: linear-gradient(135deg, #8b3a2a, #7b2a1a) !important; border-color: #5b1510 !important; }
+
+  /* Farm grid cell */
+  .farm-cell {
+    background: linear-gradient(180deg, #8b6914 0%, #7a5a10 100%);
+    border: 2px solid #5a3a08;
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.5s;
+    min-height: 80px;
+  }
+  .farm-cell.dry { background: linear-gradient(180deg, #9e7b4a 0%, #8b6a35 100%) !important; }
+  .farm-cell .crop-emoji {
+    position: absolute;
+    font-size: 2rem;
+    bottom: 4px;
+    left: 50%;
+    transform: translateX(-50%) translateY(0);
+    animation: cropPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    opacity: 0;
+  }
+  .farm-cell .leaf-emoji {
+    position: absolute;
+    font-size: 1.4rem;
+    animation: leafFall 1.2s ease-in forwards;
+    opacity: 0;
+  }
+  @keyframes cropPop {
+    0% { opacity: 0; transform: translateX(-50%) translateY(30px) scale(0.3); }
+    60% { opacity: 1; transform: translateX(-50%) translateY(-8px) scale(1.2); }
+    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+  }
+  @keyframes leafFall {
+    0% { opacity: 1; top: 10%; left: 30%; transform: rotate(0deg); }
+    50% { opacity: 0.8; left: 55%; transform: rotate(45deg); }
+    100% { opacity: 0; top: 85%; left: 40%; transform: rotate(90deg); }
+  }
+  @keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:0.7} }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes swing { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
+
+  .page { display: none; animation: fadeInUp 0.35s ease; }
+  .page.active { display: block; }
+
+  /* Wooden sign button */
+  .btn-wood {
+    font-family: 'Fredoka One', cursive;
+    background: linear-gradient(135deg, #8b5e3c 0%, #a0714f 50%, #8b5e3c 100%);
+    border: 3px solid #5a3a22;
+    box-shadow: 0 4px 0 #4a2a12, 0 6px 12px rgba(0,0,0,0.25);
+    color: #f5e6c8;
+    border-radius: 8px;
+    transition: all 0.15s;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-wood:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #4a2a12, 0 8px 16px rgba(0,0,0,0.3); }
+  .btn-wood:active { transform: translateY(2px); box-shadow: 0 2px 0 #4a2a12; }
+  .btn-barn {
+    font-family: 'Fredoka One', cursive;
+    background: linear-gradient(135deg, #c0392b, #a93226);
+    border: 3px solid #7b241c;
+    box-shadow: 0 4px 0 #5b1510, 0 6px 12px rgba(0,0,0,0.25);
+    color: #fff;
+    border-radius: 8px;
+    transition: all 0.15s;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-barn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #5b1510; }
+  .btn-barn:active { transform: translateY(2px); box-shadow: 0 2px 0 #5b1510; }
+  .btn-green {
+    font-family: 'Fredoka One', cursive;
+    background: linear-gradient(135deg, #4a7c59, #3a6b48);
+    border: 3px solid #2a5030;
+    box-shadow: 0 4px 0 #1a3020, 0 6px 12px rgba(0,0,0,0.25);
+    color: #fff;
+    border-radius: 8px;
+    transition: all 0.15s;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-green:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #1a3020; }
+  .btn-green:active { transform: translateY(2px); box-shadow: 0 2px 0 #1a3020; }
+
+  .tts-btn {
+    background: none; border: none; cursor: pointer;
+    font-size: 1rem; padding: 2px 4px;
+    transition: transform 0.2s;
+    display: inline-flex; align-items: center;
+  }
+  .tts-btn:hover { transform: scale(1.3); }
+
+  /* Rule card */
+  .rule-card {
+    background: linear-gradient(160deg, #fffbf0, #f9f0d8);
+    border: 3px solid #c8956c;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+  .example-tag {
+    background: linear-gradient(135deg, #f5e6c8, #e8d5a3);
+    border: 2px solid #c8956c;
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-weight: 700;
+    color: #6b3a2a;
+    display: inline-block;
+    margin: 3px;
+  }
+  .catchy-box {
+    background: linear-gradient(135deg, #c0392b15, #c0392b08);
+    border-left: 5px solid #c0392b;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+  }
+  .tip-box {
+    background: linear-gradient(135deg, #4a7c5915, #4a7c5908);
+    border-left: 5px solid #4a7c59;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+  }
+  .exception-box {
+    background: linear-gradient(135deg, #d4870e15, #d4870e08);
+    border-left: 5px solid #d4870e;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+  }
+  .subrule-header {
+    background: linear-gradient(135deg, #8b5e3c, #7a5230);
+    color: var(--straw);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  /* Fence decoration */
+  .fence-top {
+    border-top: 6px solid #8b5e3c;
+    position: relative;
+  }
+  .fence-top::before {
+    content: '';
+    position: absolute;
+    top: -12px; left: 0; right: 0;
+    height: 6px;
+    background: repeating-linear-gradient(90deg, #8b5e3c 0, #8b5e3c 18px, transparent 18px, transparent 30px);
+  }
+
+  /* Score stars */
+  .star { font-size: 1.8rem; filter: grayscale(1); transition: filter 0.3s; }
+  .star.lit { filter: grayscale(0); }
+
+  /* Progress bar */
+  .progress-bar-outer {
+    background: #5a3a22;
+    border-radius: 999px;
+    border: 2px solid #4a2a12;
+    overflow: hidden;
+    height: 18px;
+  }
+  .progress-bar-inner {
+    background: linear-gradient(90deg, #7ab648, #4a7c59);
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 8px rgba(122,182,72,0.5);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #e8d5a3; }
+  ::-webkit-scrollbar-thumb { background: #8b5e3c; border-radius: 4px; }
+
+  /* Speaking animation */
+  .speaking { animation: shimmer 0.5s infinite; }
+
+  .menu-card {
+    background: linear-gradient(160deg, #fffbf0, #f5e6c8);
+    border: 3px solid #c8956c;
+    border-radius: 16px;
+    box-shadow: 0 6px 0 #8b5e3c, 0 8px 20px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .menu-card:hover { transform: translateY(-4px); box-shadow: 0 10px 0 #8b5e3c, 0 12px 24px rgba(0,0,0,0.25); }
+
+  .video-frame {
+    background: #1a1a1a;
+    border: 4px solid #5a3a22;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    aspect-ratio: 16/9;
+    width: 100%;
+  }
+</style>
 </head>
-<body class="text-gray-800 antialiased pb-20">
+<body>
 
-    <!-- Header หลัก (แสดงทุกหน้า) -->
-    <header class="bg-blue-600 text-white py-8 shadow-md sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto px-4 flex justify-between items-center">
-            <div>
-                <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">📝 Spelling Rules</h1>
-                <p class="text-sm md:text-base font-semibold text-blue-100">Click the speakers to listen & learn!</p>
-            </div>
-            <!-- ปุ่มกลับหน้าแรก (ซ่อนไว้ในหน้าแรก) -->
-            <button id="nav-home-btn" onclick="goToPage('page-home')" class="page-hidden bg-white text-blue-600 px-4 py-2 rounded-full font-bold shadow hover:bg-blue-50 transition flex items-center">
-                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                Home
-            </button>
+<!-- ============ HEADER ============ -->
+<header class="barn-board text-white text-center py-3 px-4 sticky top-0 z-50">
+  <div class="max-w-5xl mx-auto flex items-center justify-between">
+    <button id="homeBtn" class="btn-wood px-3 py-2 text-sm hidden" onclick="showPage('home')">🏠 Home</button>
+    <h1 class="fredoka text-2xl md:text-3xl flex-1 text-center drop-shadow-lg">
+      🌾 Spelling Rules Farm 🌾
+    </h1>
+    <div class="w-24 hidden md:block"></div>
+  </div>
+</header>
+
+<!-- ============ HOME PAGE ============ -->
+<div id="page-home" class="page active max-w-5xl mx-auto px-4 py-8">
+  <div class="text-center mb-8">
+    <p class="text-6xl mb-3" style="animation: bounce 2s infinite">🧑‍🌾</p>
+    <h2 class="fredoka text-3xl md:text-4xl text-amber-900 mb-2">Welcome to Spelling Rules Farm!</h2>
+    <p class="text-lg text-amber-800 font-semibold">Pick a rule to harvest some knowledge! 🌱</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
+    <!-- Rule 1 -->
+    <div class="menu-card p-5" onclick="showPage('rule1')">
+      <div class="text-4xl mb-3">🔇</div>
+      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 1</h3>
+      <p class="font-bold text-amber-800">The Eight Rules of Silent "E"</p>
+      <p class="text-sm text-amber-700 mt-2">love, bike, face, age...</p>
+      <div class="mt-3 flex gap-1">
+        <span class="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold">8 sub-rules</span>
+      </div>
+    </div>
+    <!-- Rule 2 -->
+    <div class="menu-card p-5" onclick="showPage('rule2')">
+      <div class="text-4xl mb-3">📝</div>
+      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 2</h3>
+      <p class="font-bold text-amber-800">CVC Doubling Rule</p>
+      <p class="text-sm text-amber-700 mt-2">run→running, sit→sitting...</p>
+      <div class="mt-3 flex gap-1">
+        <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-bold">+ing / +ed</span>
+      </div>
+    </div>
+    <!-- Rule 3 -->
+    <div class="menu-card p-5" onclick="showPage('rule3')">
+      <div class="text-4xl mb-3">✂️</div>
+      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 3</h3>
+      <p class="font-bold text-amber-800">Drop the "E" Rule</p>
+      <p class="text-sm text-amber-700 mt-2">make→making, dance→dancing...</p>
+      <div class="mt-3 flex gap-1">
+        <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-bold">Silent E + -ing</span>
+      </div>
+    </div>
+    <!-- Rule 4 -->
+    <div class="menu-card p-5" onclick="showPage('rule4')">
+      <div class="text-4xl mb-3">🅸</div>
+      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 4</h3>
+      <p class="font-bold text-amber-800">I Before E Rule</p>
+      <p class="text-sm text-amber-700 mt-2">believe, receive...</p>
+      <div class="mt-3 flex gap-1">
+        <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-bold">Classic Rule</span>
+      </div>
+    </div>
+    <!-- Rule 5 -->
+    <div class="menu-card p-5" onclick="showPage('rule5')">
+      <div class="text-4xl mb-3">👑</div>
+      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 5</h3>
+      <p class="font-bold text-amber-800">"QU" Rule</p>
+      <p class="text-sm text-amber-700 mt-2">queen, quick, question...</p>
+      <div class="mt-3 flex gap-1">
+        <span class="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded-full font-bold">Always Together</span>
+      </div>
+    </div>
+    <!-- Mini Game -->
+    <div class="menu-card p-5 cursor-pointer" style="background: linear-gradient(160deg, #f0fff0, #d8f5d8); border-color: #4a7c59;" onclick="startGame()">
+      <div class="text-4xl mb-3">🎮</div>
+      <h3 class="fredoka text-xl text-green-900 mb-1">Mini Game</h3>
+      <p class="font-bold text-green-800">Harvest Minigame</p>
+      <p class="text-sm text-green-700 mt-2">Test your spelling skills!</p>
+      <div class="mt-3 flex gap-1">
+        <span class="text-xs bg-green-300 text-green-900 px-2 py-1 rounded-full font-bold">🌽 Harvest time!</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center text-amber-700">
+    <p class="text-sm">🚜 Click any card to start learning • 🔊 Tap speaker icons to hear words</p>
+  </div>
+</div>
+
+<!-- ============ RULE 1 PAGE ============ -->
+<div id="page-rule1" class="page max-w-5xl mx-auto px-4 py-8">
+  <div class="rule-card p-6 mb-6">
+    <h2 class="fredoka text-3xl text-amber-900 mb-1">🔇 Rule 1: The Eight Rules of Silent "E"</h2>
+    <p class="text-amber-700 font-semibold mb-4">Silent E has many important jobs in English spelling!</p>
+
+    <!-- Video -->
+    <div class="video-frame mb-6">
+      <iframe width="100%" height="100%" src="How Do You Use the Silent 'E'_ _ StoryBots_ Learn to Read _ Netflix Jr.mp4" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    </div>
+
+    <!-- Sub-rule 1.1 -->
+    <div class="mb-6">
+      <div class="subrule-header mb-3">📌 1.1 – Prevents Words Ending in V or U</div>
+      <p class="text-amber-800 mb-3">English words don't end in the letters <strong>V</strong> or <strong>U</strong>. A silent E is added to the end to fix this!</p>
+      <div class="grid md:grid-cols-2 gap-4 mb-3">
+        <div class="exception-box">
+          <p class="font-bold text-amber-900 mb-2">🚫 No words end in V:</p>
+          <div class="flex flex-wrap gap-1">
+            <span class="example-tag">love <button class="tts-btn" onclick="speak('love')">🔊</button></span>
+            <span class="example-tag">live <button class="tts-btn" onclick="speak('live')">🔊</button></span>
+            <span class="example-tag">cave <button class="tts-btn" onclick="speak('cave')">🔊</button></span>
+            <span class="example-tag">save <button class="tts-btn" onclick="speak('save')">🔊</button></span>
+            <span class="example-tag">brave <button class="tts-btn" onclick="speak('brave')">🔊</button></span>
+          </div>
         </div>
-    </header>
-
-    <main class="max-w-4xl mx-auto px-4 mt-8">
-
-        <!-- ==================== หน้าแรก: เมนูหลัก ==================== -->
-        <div id="page-home" class="fade-in">
-            <h2 class="text-2xl font-bold text-center mb-8 text-blue-800">Select a rule to start learning</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Card 1 -->
-                <button onclick="goToPage('page-rule-1')" class="bg-purple-600 text-white rounded-2xl p-6 text-left shadow-lg hover:shadow-xl hover:-translate-y-1 transition group col-span-1 md:col-span-2">
-                    <h3 class="text-3xl font-bold mb-2 group-hover:text-purple-200">1. The Silent “E” Rules</h3>
-                    <p class="text-purple-100">8 rules of how magic E changes words</p>
-                </button>
-
-                <!-- Card 2 -->
-                <button onclick="goToPage('page-rule-2')" class="bg-green-500 text-white rounded-2xl p-6 text-left shadow-lg hover:shadow-xl hover:-translate-y-1 transition group">
-                    <h3 class="text-2xl font-bold mb-2 group-hover:text-green-200">2. CVC Doubling Rule</h3>
-                    <p class="text-green-100">When to double the consonant</p>
-                </button>
-
-                <!-- Card 3 -->
-                <button onclick="goToPage('page-rule-3')" class="bg-pink-500 text-white rounded-2xl p-6 text-left shadow-lg hover:shadow-xl hover:-translate-y-1 transition group">
-                    <h3 class="text-2xl font-bold mb-2 group-hover:text-pink-200">3. Drop the “E” Rule</h3>
-                    <p class="text-pink-100">Adding -ing to words ending in E</p>
-                </button>
-
-                <!-- Card 4 -->
-                <button onclick="goToPage('page-rule-4')" class="bg-blue-500 text-white rounded-2xl p-6 text-left shadow-lg hover:shadow-xl hover:-translate-y-1 transition group">
-                    <h3 class="text-2xl font-bold mb-2 group-hover:text-blue-200">4. I before E</h3>
-                    <p class="text-blue-100">The classic rule and exceptions</p>
-                </button>
-
-                <!-- Card 5 -->
-                <button onclick="goToPage('page-rule-5')" class="bg-orange-500 text-white rounded-2xl p-6 text-left shadow-lg hover:shadow-xl hover:-translate-y-1 transition group">
-                    <h3 class="text-2xl font-bold mb-2 group-hover:text-orange-200">5. “QU” Rule</h3>
-                    <p class="text-orange-100">Q and U go hand in hand</p>
-                </button>
-            </div>
+        <div class="exception-box">
+          <p class="font-bold text-amber-900 mb-2">🚫 No words end in U:</p>
+          <div class="flex flex-wrap gap-1">
+            <span class="example-tag">blue <button class="tts-btn" onclick="speak('blue')">🔊</button></span>
+            <span class="example-tag">clue <button class="tts-btn" onclick="speak('clue')">🔊</button></span>
+            <span class="example-tag">due <button class="tts-btn" onclick="speak('due')">🔊</button></span>
+            <span class="example-tag">cue <button class="tts-btn" onclick="speak('cue')">🔊</button></span>
+          </div>
         </div>
+      </div>
+      <div class="catchy-box">
+        <p class="fredoka text-red-800 text-lg">🎵 "No words end in V or U, add an E—that's what we do!"</p>
+        <button class="tts-btn mt-1" onclick="speak('No words end in V or U, add an E, that is what we do!')">🔊</button>
+      </div>
+    </div>
 
-        <!-- ==================== หน้า: กฎข้อ 1 ==================== -->
-        <div id="page-rule-1" class="page-hidden fade-in space-y-8">
-            <h2 class="text-3xl font-bold text-purple-700 flex items-center">
-                1. The Eight Rules of the Silent “E”
-                <button onclick="speakText('The Eight Rules of the Silent E')" class="btn-speak text-xl">🔊</button>
-            </h2>
+    <!-- Sub-rule 1.2 -->
+    <div class="mb-6">
+      <div class="subrule-header mb-3">✨ 1.2 – Magic E: Makes the Vowel Say Its Name</div>
+      <p class="text-amber-800 mb-3">When a word follows the pattern <strong>Vowel – Consonant – E</strong>, the "E" makes the vowel say its long sound (its name)!</p>
+      <div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-4 mb-3 text-center">
+        <p class="fredoka text-2xl text-amber-900">Vowel → Consonant → <span class="text-red-600">E</span></p>
+        <p class="text-amber-700 mt-1">The vowel says its name! 🎤</p>
+      </div>
+      <div class="flex flex-wrap gap-2 mb-3">
+        <span class="example-tag">bake <button class="tts-btn" onclick="speak('bake')">🔊</button></span>
+        <span class="example-tag">cake <button class="tts-btn" onclick="speak('cake')">🔊</button></span>
+        <span class="example-tag">like <button class="tts-btn" onclick="speak('like')">🔊</button></span>
+        <span class="example-tag">bike <button class="tts-btn" onclick="speak('bike')">🔊</button></span>
+        <span class="example-tag">coke <button class="tts-btn" onclick="speak('coke')">🔊</button></span>
+      </div>
+      <div class="catchy-box">
+        <p class="fredoka text-red-800 text-lg">🎵 "Magic E at the end, makes the vowel say its name, my friend!"</p>
+        <button class="tts-btn mt-1" onclick="speak('Magic E at the end, makes the vowel say its name, my friend!')">🔊</button>
+      </div>
+    </div>
 
-            <!-- ช่องใส่วิดีโอ -->
-            <div class="aspect-w-16 aspect-h-9 bg-black rounded-xl flex items-center justify-center relative overflow-hidden shadow-lg border-4 border-purple-200" style="min-height: 350px;">
-                <iframe class="absolute inset-0 w-full h-full" src="How Do You Use the Silent 'E'_ _ StoryBots_ Learn to Read _ Netflix Jr.mp4" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-            </div>
-
-            <!-- เนื้อหากฎ 1A -->
-            <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500">How Do You Use the Silent 'E'_ _ StoryBots_ Learn to Read _ Netflix Jr.mp4
-                <h3 class="text-xl font-bold text-purple-700 mb-2 flex items-center flex-wrap">
-                    🛑 Prevents words from ending in V or U
-                    <button onclick="speakText('Prevents words from ending in V or U')" class="btn-speak">🔊</button>
-                </h3>
-                <div class="mb-4">
-                    <p class="text-gray-700 bg-gray-50 p-2 rounded mb-2 flex items-center flex-wrap">
-                        🎵 No words end in v, so we add a silent e
-                        <button onclick="speakText('No words end in v, so we add a silent e')" class="btn-speak">🔊</button>
-                    </p>
-                    <p class="flex items-center flex-wrap"><span class="font-bold mr-2">Example:</span> love, live, cave, save, brave 
-                        <button onclick="speakText('love. live. cave. save. brave.')" class="btn-speak">🔊</button>
-                    </p>
-                </div>
-                <div class="mb-4">
-                    <p class="text-gray-700 bg-gray-50 p-2 rounded mb-2 flex items-center flex-wrap">
-                        🎵 No words end in u, so we add a silent e
-                        <button onclick="speakText('No words end in u, so we add a silent e')" class="btn-speak">🔊</button>
-                    </p>
-                    <p class="flex items-center flex-wrap"><span class="font-bold mr-2">Example:</span> blue, clue, due, cue 
-                        <button onclick="speakText('blue. clue. due. cue.')" class="btn-speak">🔊</button>
-                    </p>
-                </div>
-                <div class="catchy-phrase p-3 rounded-lg border-l-4 border-yellow-400 font-bold text-orange-800 flex items-center flex-wrap">
-                    ✨ “No words end in V or U, add an E—that’s what we do!”
-                    <button onclick="speakText('No words end in V or U, add an E. that’s what we do!')" class="btn-speak">🔊</button>
-                </div>
-            </article>
-
-            <!-- เนื้อหากฎ 1B -->
-            <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
-                <h3 class="text-xl font-bold text-purple-700 mb-2 flex items-center flex-wrap">
-                    🎩 The Magic E where its makes the vowel says its name
-                    <button onclick="speakText('The Magic E where its makes the vowel says its name')" class="btn-speak">🔊</button>
-                </h3>
-                <p class="mb-2 flex items-center flex-wrap">
-                    When an “e” comes around a consonant, make the vowel says its name.
-                    <button onclick="speakText('When an e comes around a consonant, make the vowel says its name.')" class="btn-speak">🔊</button>
-                </p>
-                <p class="mb-2 text-sm bg-purple-50 p-2 rounded text-purple-800 font-semibold flex items-center flex-wrap">
-                    The pattern goes like this: ( vowel consonant and the letter e )
-                    <button onclick="speakText('The pattern goes like this: vowel consonant and the letter e')" class="btn-speak">🔊</button>
-                </p>
-                <p class="mb-4 flex items-center flex-wrap"><span class="font-bold mr-2">for example:</span> bake, cake, like, bike, coke 
-                    <button onclick="speakText('for example. bake. cake. like. bike. coke.')" class="btn-speak">🔊</button>
-                </p>
-                <div class="catchy-phrase p-3 rounded-lg border-l-4 border-yellow-400 font-bold text-orange-800 flex items-center flex-wrap">
-                    ✨ “Magic E at the end, makes the vowel say its name, my friend!”
-                    <button onclick="speakText('Magic E at the end, makes the vowel say its name, my friend!')" class="btn-speak">🔊</button>
-                </div>
-            </article>
-
-             <!-- เนื้อหากฎ 1C -->
-             <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
-                <h3 class="text-xl font-bold text-purple-700 mb-2 flex items-center flex-wrap">
-                    🧊 Silent E keeps C and G soft
-                    <button onclick="speakText('Silent E keeps C and G soft')" class="btn-speak">🔊</button>
-                </h3>
-                <p class="font-bold mb-2 flex items-center">What it does: Silent e helps keep: <button onclick="speakText('What it does: Silent e helps keep:')" class="btn-speak">🔊</button></p>
-                <ul class="mb-4 space-y-2 ml-4">
-                    <li class="flex items-center flex-wrap">c = /s/ (face, rice) <button onclick="speakText('c sounds like s. face. rice.')" class="btn-speak">🔊</button></li>
-                    <li class="flex items-center flex-wrap">g = /j/ (age, huge) <button onclick="speakText('g sounds like j. age. huge.')" class="btn-speak">🔊</button></li>
-                </ul>
-                
-                <div class="bg-red-50 p-4 rounded mb-4 border border-red-200">
-                    <p class="font-bold text-red-700 mb-2 flex items-center">Without “e”: <button onclick="speakText('Without e:')" class="btn-speak">🔊</button></p>
-                    <ul class="space-y-2 text-gray-800 ml-4">
-                        <li class="flex items-center">cap (k sound) vs cape <button onclick="speakText('cap, with k sound, versus cape')" class="btn-speak">🔊</button></li>
-                        <li class="flex items-center">rag (g sound) vs rage <button onclick="speakText('rag, with g sound, versus rage')" class="btn-speak">🔊</button></li>
-                    </ul>
-                </div>
-
-                <div class="bg-blue-50 p-3 rounded mb-4 text-blue-800 flex items-center flex-wrap">
-                    <span class="font-bold mr-2">Teaching tip:</span> This is super important for pronunciation.
-                    <button onclick="speakText('Teaching tip: This is super important for pronunciation.')" class="btn-speak">🔊</button>
-                </div>
-
-                <div class="catchy-phrase p-3 rounded-lg border-l-4 border-yellow-400 font-bold text-orange-800 flex items-center flex-wrap">
-                    ✨ “C says /s/ and G says /j/, Silent E keeps them that way!”
-                    <button onclick="speakText('C says s and G says j, Silent E keeps them that way!')" class="btn-speak">🔊</button>
-                </div>
-            </article>
-
-             <!-- เนื้อหากฎ 1D -->
-             <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
-                <h3 class="text-xl font-bold text-purple-700 mb-2 flex items-center flex-wrap">
-                    👯 Shows word meaning (homophones)
-                    <button onclick="speakText('Shows word meaning. homophones.')" class="btn-speak">🔊</button>
-                </h3>
-                <p class="font-bold mb-2 flex items-center">What it does: Silent e helps distinguish words that sound the same: <button onclick="speakText('What it does: Silent e helps distinguish words that sound the same:')" class="btn-speak">🔊</button></p>
-                
-                <div class="flex flex-wrap gap-4 mb-4 ml-4">
-                    <span class="bg-gray-100 px-3 py-1 rounded flex items-center">by / bye <button onclick="speakText('by. bye.')" class="btn-speak">🔊</button></span>
-                    <span class="bg-gray-100 px-3 py-1 rounded flex items-center">be / bee <button onclick="speakText('be. bee.')" class="btn-speak">🔊</button></span>
-                    <span class="bg-gray-100 px-3 py-1 rounded flex items-center">or / ore <button onclick="speakText('or. ore.')" class="btn-speak">🔊</button></span>
-                </div>
-
-                <div class="bg-blue-50 p-3 rounded mb-4 text-blue-800 flex items-center flex-wrap">
-                    <span class="font-bold mr-2">Teaching tip:</span> Great for vocabulary building
-                    <button onclick="speakText('Teaching tip: Great for vocabulary building')" class="btn-speak">🔊</button>
-                </div>
-
-                <div class="catchy-phrase p-3 rounded-lg border-l-4 border-yellow-400 font-bold text-orange-800 flex items-center flex-wrap">
-                    ✨ “Same sound, different way— Silent E helps all the way!”
-                    <button onclick="speakText('Same sound, different way. Silent E helps all the way!')" class="btn-speak">🔊</button>
-                </div>
-            </article>
-
-            <!-- เนื้อหากฎ 1E -->
-            <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-purple-500">
-                <h3 class="text-xl font-bold text-purple-700 mb-2 flex items-center flex-wrap">
-                    🔄 Silent E can signal a word change (Special Rule)
-                    <button onclick="speakText('Silent E can signal a word change. Special Rule.')" class="btn-speak">🔊</button>
-                </h3>
-                <p class="mb-4 flex items-center flex-wrap">
-                    Sometimes adding a silent e changes both the sound and the meaning of a word.
-                    <button onclick="speakText('Sometimes adding a silent e changes both the sound and the meaning of a word.')" class="btn-speak">🔊</button>
-                </p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
-                    <div class="bg-gray-50 p-4 rounded-lg">
-                        <p class="font-bold mb-2 flex items-center text-lg">Examples: <button onclick="speakText('Examples:')" class="btn-speak">🔊</button></p>
-                        <div class="space-y-2 ml-2 text-lg">
-                            <div class="flex items-center">bath → bathe <button onclick="speakText('bath becomes bathe')" class="btn-speak">🔊</button></div>
-                            <div class="flex items-center">breath → breathe <button onclick="speakText('breath becomes breathe')" class="btn-speak">🔊</button></div>
-                            <div class="flex items-center">cloth → clothe <button onclick="speakText('cloth becomes clothe')" class="btn-speak">🔊</button></div>
-                            <div class="flex items-center">teeth → teethe <button onclick="speakText('teeth becomes teethe')" class="btn-speak">🔊</button></div>
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-3">
-                        <div class="bg-purple-50 p-3 rounded text-purple-800">
-                            <p class="font-bold flex items-center mb-1">Pattern: <button onclick="speakText('Pattern:')" class="btn-speak">🔊</button></p>
-                            <ul class="ml-4 list-disc text-sm space-y-1">
-                                <li class="flex items-center">Left side = usually noun (a thing) <button onclick="speakText('Left side is usually noun, a thing')" class="btn-speak">🔊</button></li>
-                                <li class="flex items-center">Right side = usually verb (an action) <button onclick="speakText('Right side is usually verb, an action')" class="btn-speak">🔊</button></li>
-                            </ul>
-                        </div>
-                        <div class="bg-blue-50 p-3 rounded text-blue-800">
-                            <p class="font-bold flex items-center mb-1">🔊 Sound change: <button onclick="speakText('Sound change:')" class="btn-speak">🔊</button></p>
-                            <ul class="ml-4 list-disc text-sm space-y-1">
-                                <li class="flex items-center">th changes from soft /θ/ → voiced /ð/ <button onclick="speakText('t h changes from soft to voiced')" class="btn-speak">🔊</button></li>
-                                <li class="flex items-center">Sometimes the vowel sound changes too <button onclick="speakText('Sometimes the vowel sound changes too')" class="btn-speak">🔊</button></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="bg-red-50 p-4 rounded-lg mb-4 border border-red-200">
-                    <p class="font-bold text-red-700 flex items-center mb-1">⚠️ Important note: <button onclick="speakText('Important note:')" class="btn-speak">🔊</button></p>
-                    <p class="flex items-center mb-3">This is a special pattern, not a general rule. <button onclick="speakText('This is a special pattern, not a general rule.')" class="btn-speak">🔊</button></p>
-                    
-                    <p class="font-bold flex items-center mb-1 text-red-800">❌ It is: <button onclick="speakText('It is:')" class="btn-speak">🔊</button></p>
-                    <ul class="ml-4 mb-4 list-disc text-red-900">
-                        <li class="flex items-center">Not always true <button onclick="speakText('Not always true')" class="btn-speak">🔊</button></li>
-                        <li class="flex items-center">Not easy to predict <button onclick="speakText('Not easy to predict')" class="btn-speak">🔊</button></li>
-                    </ul>
-
-                    <p class="font-bold flex items-center mb-1 text-red-800">🚫 Examples that do NOT follow the pattern: <button onclick="speakText('Examples that do NOT follow the pattern:')" class="btn-speak">🔊</button></p>
-                    <ul class="ml-4 list-disc text-red-900 font-semibold">
-                        <li class="flex items-center">both → (no bothe) <button onclick="speakText('both, no bothe')" class="btn-speak">🔊</button></li>
-                        <li class="flex items-center">math → (no mathe) <button onclick="speakText('math, no mathe')" class="btn-speak">🔊</button></li>
-                    </ul>
-                </div>
-
-                <div class="catchy-phrase p-3 rounded-lg border-l-4 border-yellow-400 font-bold text-orange-800 flex items-center flex-wrap">
-                    ✨ “Add an E, the sound may change—from soft to voiced, a little strange!”
-                    <button onclick="speakText('Add an E, the sound may change. from soft to voiced, a little strange!')" class="btn-speak">🔊</button>
-                </div>
-            </article>
+    <!-- Sub-rule 1.3 -->
+    <div class="mb-6">
+      <div class="subrule-header mb-3">🔤 1.3 – Silent E Keeps C and G Soft</div>
+      <p class="text-amber-800 mb-3">Silent E helps keep <strong>C</strong> sounding like /s/ and <strong>G</strong> sounding like /j/.</p>
+      <div class="grid md:grid-cols-2 gap-4 mb-3">
+        <div class="rule-card p-4">
+          <p class="font-bold text-amber-900 mb-2">C = /s/ sound:</p>
+          <span class="example-tag">face <button class="tts-btn" onclick="speak('face')">🔊</button></span>
+          <span class="example-tag">rice <button class="tts-btn" onclick="speak('rice')">🔊</button></span>
+          <div class="mt-2 text-sm text-amber-700">Without E: <strong>cap</strong> /k/ → <strong>cape</strong> /k…/ same but face has /s/!</div>
         </div>
-
-        <!-- ==================== หน้า: กฎข้อ 2 ==================== -->
-        <div id="page-rule-2" class="page-hidden fade-in space-y-8">
-            <h2 class="text-3xl font-bold text-green-700 flex items-center">
-                2. CVC Doubling Rule (Double the consonant)
-                <button onclick="speakText('C V C Doubling Rule. Double the consonant.')" class="btn-speak text-xl">🔊</button>
-            </h2>
-
-            <!-- ช่องใส่วิดีโอ -->
-            <div class="aspect-w-16 aspect-h-9 bg-black rounded-xl flex items-center justify-center relative overflow-hidden shadow-lg border-4 border-green-200" style="min-height: 350px;">
-                <div class="text-center text-white z-10 p-4">
-                    <p class="font-bold text-xl mb-2">🎥 Video Lesson: CVC Rule</p>
-                    <p class="text-sm opacity-75">Put your YouTube Iframe code here</p>
-                </div>
-            </div>
-
-            <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-green-500">
-                <p class="font-bold text-lg mb-2 flex items-center flex-wrap">
-                    Rule: When a word has:
-                    <button onclick="speakText('Rule: When a word has:')" class="btn-speak">🔊</button>
-                </p>
-                <ul class="ml-6 mb-3 list-disc text-lg font-semibold">
-                    <li class="flex items-center">1 syllable <button onclick="speakText('1 syllable')" class="btn-speak">🔊</button></li>
-                    <li class="flex items-center">Consonant–Vowel–Consonant (CVC) <button onclick="speakText('Consonant Vowel Consonant, C V C')" class="btn-speak">🔊</button></li>
-                </ul>
-                <p class="text-green-700 font-bold mb-4 flex items-center flex-wrap text-lg">
-                    👉 Double the last consonant before adding -ing, -ed
-                    <button onclick="speakText('Double the last consonant before adding i n g, or e d')" class="btn-speak">🔊</button>
-                </p>
-                
-                <p class="font-bold flex items-center mb-2">Examples: <button onclick="speakText('Examples:')" class="btn-speak">🔊</button></p>
-                <div class="space-y-3">
-                    <div class="bg-gray-50 p-3 rounded flex items-center flex-wrap text-lg">
-                        run → running 
-                        <button onclick="speakText('run becomes running')" class="btn-speak">🔊</button>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded flex items-center flex-wrap text-lg">
-                        sit → sitting 
-                        <button onclick="speakText('sit becomes sitting')" class="btn-speak">🔊</button>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded flex items-center flex-wrap text-lg">
-                        hop → hopped 
-                        <button onclick="speakText('hop becomes hopped')" class="btn-speak">🔊</button>
-                    </div>
-                </div>
-            </article>
+        <div class="rule-card p-4">
+          <p class="font-bold text-amber-900 mb-2">G = /j/ sound:</p>
+          <span class="example-tag">age <button class="tts-btn" onclick="speak('age')">🔊</button></span>
+          <span class="example-tag">huge <button class="tts-btn" onclick="speak('huge')">🔊</button></span>
+          <div class="mt-2 text-sm text-amber-700">Without E: <strong>rag</strong> /g/ → <strong>rage</strong> /j/</div>
         </div>
+      </div>
+      <div class="tip-box mb-3">
+        <p class="font-bold text-green-800">🌱 Teaching Tip:</p>
+        <p class="text-green-700">This is super important for pronunciation! Remove the E and the sound changes.</p>
+      </div>
+      <div class="catchy-box">
+        <p class="fredoka text-red-800 text-lg">🎵 "C says /s/ and G says /j/, Silent E keeps them that way!"</p>
+        <button class="tts-btn mt-1" onclick="speak('C says s and G says j, Silent E keeps them that way!')">🔊</button>
+      </div>
+    </div>
 
-        <!-- ==================== หน้า: กฎข้อ 3 ==================== -->
-        <div id="page-rule-3" class="page-hidden fade-in space-y-8">
-            <h2 class="text-3xl font-bold text-pink-700 flex items-center">
-                3. Drop the “E” Rule
-                <button onclick="speakText('Drop the E Rule')" class="btn-speak text-xl">🔊</button>
-            </h2>
-
-            <!-- ช่องใส่วิดีโอ -->
-            <div class="aspect-w-16 aspect-h-9 bg-black rounded-xl flex items-center justify-center relative overflow-hidden shadow-lg border-4 border-pink-200" style="min-height: 350px;">
-                <div class="text-center text-white z-10 p-4">
-                    <p class="font-bold text-xl mb-2">🎥 Video Lesson: Drop the E</p>
-                    <p class="text-sm opacity-75">Put your YouTube Iframe code here</p>
-                </div>
-            </div>
-
-            <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-pink-500">
-                <p class="font-bold text-lg mb-4 flex items-center flex-wrap">
-                    Rule: If a word ends in silent e, drop the e before adding -ing
-                    <button onclick="speakText('Rule: If a word ends in silent e, drop the e before adding i n g')" class="btn-speak">🔊</button>
-                </p>
-                
-                <p class="font-bold flex items-center mb-2">Examples: <button onclick="speakText('Examples:')" class="btn-speak">🔊</button></p>
-                <div class="space-y-3 mb-6">
-                    <div class="bg-gray-50 p-3 rounded flex items-center flex-wrap text-lg">
-                        make → making 
-                        <button onclick="speakText('make becomes making')" class="btn-speak">🔊</button>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded flex items-center flex-wrap text-lg">
-                        write → writing 
-                        <button onclick="speakText('write becomes writing')" class="btn-speak">🔊</button>
-                    </div>
-                    <div class="bg-gray-50 p-3 rounded flex items-center flex-wrap text-lg">
-                        dance → dancing 
-                        <button onclick="speakText('dance becomes dancing')" class="btn-speak">🔊</button>
-                    </div>
-                </div>
-
-                <div class="bg-red-50 text-red-800 p-4 rounded mb-4 flex items-center flex-wrap border border-red-200">
-                    <strong class="mr-2">BUT:</strong> There are exceptions to the rule: see → seeing (keep e)
-                    <button onclick="speakText('But, There are exceptions to the rule. see becomes seeing, keep the e.')" class="btn-speak">🔊</button>
-                </div>
-
-                <div class="catchy-phrase p-3 rounded-lg border-l-4 border-yellow-400 font-bold text-orange-800 flex items-center flex-wrap">
-                    ✨ “Silent E, goodbye for now—add -ing, drop it out!”
-                    <button onclick="speakText('Silent E, goodbye for now. add i n g, drop it out!')" class="btn-speak">🔊</button>
-                </div>
-            </article>
+    <!-- Sub-rule 1.4 -->
+    <div class="mb-6">
+      <div class="subrule-header mb-3">📖 1.4 – Shows Word Meaning (Homophones)</div>
+      <p class="text-amber-800 mb-3">Silent E helps us tell apart words that sound the same (homophones)!</p>
+      <div class="grid grid-cols-3 gap-3 mb-3">
+        <div class="rule-card p-3 text-center">
+          <p class="font-bold text-amber-900">by <button class="tts-btn" onclick="speak('by')">🔊</button></p>
+          <p class="text-2xl">↕️</p>
+          <p class="font-bold text-amber-900">bye <button class="tts-btn" onclick="speak('bye')">🔊</button></p>
         </div>
-
-        <!-- ==================== หน้า: กฎข้อ 4 ==================== -->
-        <div id="page-rule-4" class="page-hidden fade-in space-y-8">
-            <h2 class="text-3xl font-bold text-blue-700 flex items-center">
-                4. I before E (Classic rule)
-                <button onclick="speakText('I before E. Classic rule.')" class="btn-speak text-xl">🔊</button>
-            </h2>
-
-            <!-- ช่องใส่วิดีโอ -->
-            <div class="aspect-w-16 aspect-h-9 bg-black rounded-xl flex items-center justify-center relative overflow-hidden shadow-lg border-4 border-blue-200" style="min-height: 350px;">
-                <div class="text-center text-white z-10 p-4">
-                    <p class="font-bold text-xl mb-2">🎥 Video Lesson: I before E</p>
-                    <p class="text-sm opacity-75">Put your YouTube Iframe code here</p>
-                </div>
-            </div>
-
-            <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-blue-500">
-                <p class="font-bold text-xl mb-4 text-blue-800 flex items-center flex-wrap">
-                    Rule: “I before E, except after C”
-                    <button onclick="speakText('Rule: I before E, except after C')" class="btn-speak">🔊</button>
-                </p>
-                
-                <p class="font-bold flex items-center mb-2">Examples: <button onclick="speakText('Examples:')" class="btn-speak">🔊</button></p>
-                <div class="flex flex-wrap gap-4 mb-6">
-                    <span class="bg-gray-100 px-4 py-2 rounded shadow-sm text-lg flex items-center">believe <button onclick="speakText('believe')" class="btn-speak">🔊</button></span>
-                    <span class="bg-gray-100 px-4 py-2 rounded shadow-sm text-lg flex items-center">receive <button onclick="speakText('receive')" class="btn-speak">🔊</button></span>
-                </div>
-
-                <div class="bg-yellow-50 text-yellow-900 p-4 rounded mb-4 border border-yellow-200">
-                    <p class="font-bold mb-2 flex items-center flex-wrap">Take Note: This rule has MANY exceptions (weird, science) <button onclick="speakText('Take Note: This rule has MANY exceptions like weird, and science')" class="btn-speak">🔊</button></p>
-                    <p class="text-red-600 font-bold flex items-center flex-wrap text-lg">👉 So remember: “Helpful, but not always right!” <button onclick="speakText('So remember: Helpful, but not always right!')" class="btn-speak">🔊</button></p>
-                </div>
-
-                <div class="catchy-phrase p-3 rounded-lg border-l-4 border-yellow-400 font-bold text-orange-800 flex items-center flex-wrap">
-                    ✨ “I before E, except after C—but sometimes it’s different, you’ll see!”
-                    <button onclick="speakText('I before E, except after C. but sometimes it’s different, you’ll see!')" class="btn-speak">🔊</button>
-                </div>
-            </article>
+        <div class="rule-card p-3 text-center">
+          <p class="font-bold text-amber-900">be <button class="tts-btn" onclick="speak('be')">🔊</button></p>
+          <p class="text-2xl">↕️</p>
+          <p class="font-bold text-amber-900">bee <button class="tts-btn" onclick="speak('bee')">🔊</button></p>
         </div>
-
-        <!-- ==================== หน้า: กฎข้อ 5 ==================== -->
-        <div id="page-rule-5" class="page-hidden fade-in space-y-8">
-            <h2 class="text-3xl font-bold text-orange-700 flex items-center">
-                5. “QU” Rule
-                <button onclick="speakText('The Q U Rule')" class="btn-speak text-xl">🔊</button>
-            </h2>
-
-            <!-- ช่องใส่วิดีโอ -->
-            <div class="aspect-w-16 aspect-h-9 bg-black rounded-xl flex items-center justify-center relative overflow-hidden shadow-lg border-4 border-orange-200" style="min-height: 350px;">
-                <div class="text-center text-white z-10 p-4">
-                    <p class="font-bold text-xl mb-2">🎥 Video Lesson: QU Rule</p>
-                    <p class="text-sm opacity-75">Put your YouTube Iframe code here</p>
-                </div>
-            </div>
-
-            <article class="bg-white rounded-xl p-6 shadow-sm border-l-4 border-orange-500">
-                <p class="font-bold text-xl mb-6 text-orange-800 flex items-center flex-wrap">
-                    Rule: Q is almost always followed by U
-                    <button onclick="speakText('Rule: Q is almost always followed by U')" class="btn-speak">🔊</button>
-                </p>
-                
-                <p class="font-bold flex items-center mb-2">Examples: <button onclick="speakText('Examples:')" class="btn-speak">🔊</button></p>
-                <div class="flex flex-wrap gap-4 mb-6">
-                    <span class="bg-orange-50 px-4 py-2 rounded shadow border border-orange-100 text-lg flex items-center font-bold">queen <button onclick="speakText('queen')" class="btn-speak">🔊</button></span>
-                    <span class="bg-orange-50 px-4 py-2 rounded shadow border border-orange-100 text-lg flex items-center font-bold">quick <button onclick="speakText('quick')" class="btn-speak">🔊</button></span>
-                    <span class="bg-orange-50 px-4 py-2 rounded shadow border border-orange-100 text-lg flex items-center font-bold">question <button onclick="speakText('question')" class="btn-speak">🔊</button></span>
-                </div>
-
-                <div class="catchy-phrase p-3 rounded-lg border-l-4 border-yellow-400 font-bold text-orange-800 flex items-center flex-wrap">
-                    ✨ “Q and U go hand in hand— together they always stand!”
-                    <button onclick="speakText('Q and U go hand in hand. together they always stand!')" class="btn-speak">🔊</button>
-                </div>
-            </article>
+        <div class="rule-card p-3 text-center">
+          <p class="font-bold text-amber-900">or <button class="tts-btn" onclick="speak('or')">🔊</button></p>
+          <p class="text-2xl">↕️</p>
+          <p class="font-bold text-amber-900">ore <button class="tts-btn" onclick="speak('ore')">🔊</button></p>
         </div>
+      </div>
+      <div class="tip-box mb-3">
+        <p class="font-bold text-green-800">🌱 Teaching Tip:</p>
+        <p class="text-green-700">Great for vocabulary building! Use both words in sentences to show the difference.</p>
+      </div>
+      <div class="catchy-box">
+        <p class="fredoka text-red-800 text-lg">🎵 "Same sound, different way— Silent E helps all the way!"</p>
+        <button class="tts-btn mt-1" onclick="speak('Same sound, different way, Silent E helps all the way!')">🔊</button>
+      </div>
+    </div>
 
-    </main>
+    <!-- Sub-rule 1.5 -->
+    <div class="mb-4">
+      <div class="subrule-header mb-3">⚡ 1.5 – Silent E Can Signal a Word Change (Special Rule)</div>
+      <p class="text-amber-800 mb-3">Sometimes adding a silent E changes <em>both</em> the sound <em>and</em> the meaning — often from a <strong>noun</strong> to a <strong>verb</strong>!</p>
+      <div class="grid md:grid-cols-2 gap-4 mb-3">
+        <div class="rule-card p-4">
+          <p class="font-bold text-amber-900 mb-2">Noun → Verb examples:</p>
+          <div class="space-y-1 text-sm">
+            <div class="flex items-center gap-2">
+              <span class="example-tag">bath <button class="tts-btn" onclick="speak('bath')">🔊</button></span>
+              <span class="text-amber-600 font-bold">→</span>
+              <span class="example-tag">bathe <button class="tts-btn" onclick="speak('bathe')">🔊</button></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="example-tag">breath <button class="tts-btn" onclick="speak('breath')">🔊</button></span>
+              <span class="text-amber-600 font-bold">→</span>
+              <span class="example-tag">breathe <button class="tts-btn" onclick="speak('breathe')">🔊</button></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="example-tag">cloth <button class="tts-btn" onclick="speak('cloth')">🔊</button></span>
+              <span class="text-amber-600 font-bold">→</span>
+              <span class="example-tag">clothe <button class="tts-btn" onclick="speak('clothe')">🔊</button></span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="example-tag">teeth <button class="tts-btn" onclick="speak('teeth')">🔊</button></span>
+              <span class="text-amber-600 font-bold">→</span>
+              <span class="example-tag">teethe <button class="tts-btn" onclick="speak('teethe')">🔊</button></span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="exception-box mb-2">
+            <p class="font-bold text-amber-900">🔊 Sound change:</p>
+            <p class="text-amber-800 text-sm">The "th" changes from soft /θ/ → voiced /ð/. Sometimes the vowel sound changes too!</p>
+          </div>
+          <div class="bg-red-50 border-2 border-red-300 rounded-lg p-3">
+            <p class="font-bold text-red-800 mb-1">⚠️ Exceptions (no pattern):</p>
+            <p class="text-red-700 text-sm">• both → (no "bothe")</p>
+            <p class="text-red-700 text-sm">• math → (no "mathe")</p>
+          </div>
+        </div>
+      </div>
+      <div class="catchy-box">
+        <p class="fredoka text-red-800 text-lg">🎵 "Add an E, the sound may change—from soft to voiced, a little strange!"</p>
+        <button class="tts-btn mt-1" onclick="speak('Add an E, the sound may change, from soft to voiced, a little strange!')">🔊</button>
+      </div>
+    </div>
+  </div>
+  <div class="text-center">
+    <button class="btn-green px-6 py-3 text-lg" onclick="showPage('rule2')">Next Rule: CVC Doubling ➡️</button>
+  </div>
+</div>
 
-    <!-- Script สำหรับควบคุมการทำงานของเว็บไซต์ -->
-    <script>
-        // ฟังก์ชันสำหรับสลับหน้าจอ (ทำงานคล้ายการเปลี่ยนหน้าเว็บ)
-        function goToPage(targetPageId) {
-            // 1. ซ่อนทุกหน้าที่มี class 'page-hidden'
-            const pages = ['page-home', 'page-rule-1', 'page-rule-2', 'page-rule-3', 'page-rule-4', 'page-rule-5'];
-            pages.forEach(page => {
-                document.getElementById(page).classList.add('page-hidden');
-            });
+<!-- ============ RULE 2 PAGE ============ -->
+<div id="page-rule2" class="page max-w-5xl mx-auto px-4 py-8">
+  <div class="rule-card p-6 mb-6">
+    <h2 class="fredoka text-3xl text-amber-900 mb-1">📝 Rule 2: CVC Doubling Rule</h2>
+    <p class="text-amber-700 font-semibold mb-4">Double the last consonant before adding -ing or -ed!</p>
+    <div class="video-frame mb-6">
+      <iframe width="100%" height="100%" src="https://www.youtube-nocookie.com/embed/?feature=oembed" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    </div>
+    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5">
+      <p class="fredoka text-2xl text-amber-900 mb-3 text-center">When a word has:</p>
+      <div class="grid grid-cols-3 gap-3 text-center mb-4">
+        <div class="wood-plank rounded-lg p-3 text-straw">
+          <p class="fredoka text-3xl" style="color:#f5e6c8">1️⃣</p>
+          <p class="font-bold" style="color:#f5e6c8">1 Syllable</p>
+        </div>
+        <div class="wood-plank rounded-lg p-3 text-straw">
+          <p class="fredoka text-3xl" style="color:#f5e6c8">🔤</p>
+          <p class="font-bold" style="color:#f5e6c8">C–V–C Pattern</p>
+        </div>
+        <div class="wood-plank rounded-lg p-3 text-straw">
+          <p class="fredoka text-3xl" style="color:#f5e6c8">➕</p>
+          <p class="font-bold" style="color:#f5e6c8">Adding -ing or -ed</p>
+        </div>
+      </div>
+      <p class="text-center fredoka text-xl text-red-700">👉 Double the last consonant!</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-4 mb-5">
+      <div class="rule-card p-4">
+        <p class="font-bold text-amber-900 mb-3">Examples with -ing:</p>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <span class="example-tag">run <button class="tts-btn" onclick="speak('run')">🔊</button></span>
+            <span class="fredoka text-amber-700">→</span>
+            <span class="example-tag">runn<span class="text-red-600 font-black">n</span>ing <button class="tts-btn" onclick="speak('running')">🔊</button></span>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="example-tag">sit <button class="tts-btn" onclick="speak('sit')">🔊</button></span>
+            <span class="fredoka text-amber-700">→</span>
+            <span class="example-tag">sit<span class="text-red-600 font-black">t</span>ing <button class="tts-btn" onclick="speak('sitting')">🔊</button></span>
+          </div>
+        </div>
+      </div>
+      <div class="rule-card p-4">
+        <p class="font-bold text-amber-900 mb-3">Examples with -ed:</p>
+        <div class="space-y-2">
+          <div class="flex items-center gap-3">
+            <span class="example-tag">hop <button class="tts-btn" onclick="speak('hop')">🔊</button></span>
+            <span class="fredoka text-amber-700">→</span>
+            <span class="example-tag">hop<span class="text-red-600 font-black">p</span>ed <button class="tts-btn" onclick="speak('hopped')">🔊</button></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="catchy-box">
+      <p class="fredoka text-red-800 text-lg">🎵 "One syllable, C-V-C—double the last letter, can't you see!"</p>
+      <button class="tts-btn mt-1" onclick="speak('One syllable, C V C, double the last letter, can not you see!')">🔊</button>
+    </div>
+  </div>
+  <div class="flex gap-3 justify-center">
+    <button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule1')">⬅️ Rule 1</button>
+    <button class="btn-green px-5 py-2 text-base" onclick="showPage('rule3')">Rule 3 ➡️</button>
+  </div>
+</div>
 
-            // 2. แสดงหน้าที่ผู้ใช้เลือก
-            document.getElementById(targetPageId).classList.remove('page-hidden');
+<!-- ============ RULE 3 PAGE ============ -->
+<div id="page-rule3" class="page max-w-5xl mx-auto px-4 py-8">
+  <div class="rule-card p-6 mb-6">
+    <h2 class="fredoka text-3xl text-amber-900 mb-1">✂️ Rule 3: Drop the "E" Rule</h2>
+    <p class="text-amber-700 font-semibold mb-4">If a word ends in silent E, drop it before adding -ing!</p>
+    <div class="video-frame mb-6">
+      <iframe width="100%" height="100%" src="https://www.youtube-nocookie.com/embed/?feature=oembed" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    </div>
+    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center">
+      <p class="fredoka text-2xl text-amber-900">Word ends in silent E?</p>
+      <p class="text-4xl my-2">✂️ + ing</p>
+      <p class="fredoka text-xl text-red-700">Drop the E, then add -ing!</p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-4 mb-5">
+      <div class="rule-card p-4 text-center">
+        <span class="example-tag text-lg">make <button class="tts-btn" onclick="speak('make')">🔊</button></span>
+        <p class="text-2xl my-2">⬇️</p>
+        <p class="text-sm text-amber-700">drop the E</p>
+        <span class="example-tag text-lg mt-1">making <button class="tts-btn" onclick="speak('making')">🔊</button></span>
+      </div>
+      <div class="rule-card p-4 text-center">
+        <span class="example-tag text-lg">write <button class="tts-btn" onclick="speak('write')">🔊</button></span>
+        <p class="text-2xl my-2">⬇️</p>
+        <p class="text-sm text-amber-700">drop the E</p>
+        <span class="example-tag text-lg mt-1">writing <button class="tts-btn" onclick="speak('writing')">🔊</button></span>
+      </div>
+      <div class="rule-card p-4 text-center">
+        <span class="example-tag text-lg">dance <button class="tts-btn" onclick="speak('dance')">🔊</button></span>
+        <p class="text-2xl my-2">⬇️</p>
+        <p class="text-sm text-amber-700">drop the E</p>
+        <span class="example-tag text-lg mt-1">dancing <button class="tts-btn" onclick="speak('dancing')">🔊</button></span>
+      </div>
+    </div>
+    <div class="bg-red-50 border-2 border-red-300 rounded-xl p-4 mb-4">
+      <p class="font-bold text-red-800 mb-2">⚠️ Exception — Keep the E:</p>
+      <div class="flex items-center gap-3">
+        <span class="example-tag">see <button class="tts-btn" onclick="speak('see')">🔊</button></span>
+        <span class="fredoka text-amber-700">→</span>
+        <span class="example-tag">seeing <button class="tts-btn" onclick="speak('seeing')">🔊</button></span>
+        <span class="text-red-700 text-sm font-bold">(keep the E!)</span>
+      </div>
+    </div>
+    <div class="catchy-box">
+      <p class="fredoka text-red-800 text-lg">🎵 "Silent E, goodbye for now—add -ing, drop it out!"</p>
+      <button class="tts-btn mt-1" onclick="speak('Silent E, goodbye for now, add ing, drop it out!')">🔊</button>
+    </div>
+  </div>
+  <div class="flex gap-3 justify-center">
+    <button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule2')">⬅️ Rule 2</button>
+    <button class="btn-green px-5 py-2 text-base" onclick="showPage('rule4')">Rule 4 ➡️</button>
+  </div>
+</div>
 
-            // 3. จัดการแสดงปุ่ม Home (ถ้าอยู่หน้าแรกให้ซ่อน, ถ้าอยู่หน้าอื่นให้แสดง)
-            const homeBtn = document.getElementById('nav-home-btn');
-            if(targetPageId === 'page-home') {
-                homeBtn.classList.add('page-hidden');
-            } else {
-                homeBtn.classList.remove('page-hidden');
-            }
+<!-- ============ RULE 4 PAGE ============ -->
+<div id="page-rule4" class="page max-w-5xl mx-auto px-4 py-8">
+  <div class="rule-card p-6 mb-6">
+    <h2 class="fredoka text-3xl text-amber-900 mb-1">🅸 Rule 4: I Before E Rule</h2>
+    <p class="text-amber-700 font-semibold mb-4">The classic spelling rule—with a famous exception!</p>
+    <div class="video-frame mb-6">
+      <iframe width="100%" height="100%" src="https://www.youtube-nocookie.com/embed/?feature=oembed" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    </div>
+    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center">
+      <p class="fredoka text-3xl text-amber-900 mb-2">I before E,</p>
+      <p class="fredoka text-2xl text-red-700 mb-2">except after C</p>
+      <p class="text-amber-700">...but sometimes it's different, you'll see! 🙃</p>
+    </div>
+    <div class="grid md:grid-cols-2 gap-5 mb-5">
+      <div class="rule-card p-4">
+        <p class="font-bold text-amber-900 mb-3">✅ Follow the Rule:</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="example-tag">believe <button class="tts-btn" onclick="speak('believe')">🔊</button></span>
+          <span class="example-tag">receive <button class="tts-btn" onclick="speak('receive')">🔊</button></span>
+          <span class="example-tag">field <button class="tts-btn" onclick="speak('field')">🔊</button></span>
+          <span class="example-tag">piece <button class="tts-btn" onclick="speak('piece')">🔊</button></span>
+        </div>
+      </div>
+      <div class="bg-red-50 border-2 border-red-300 rounded-xl p-4">
+        <p class="font-bold text-red-800 mb-3">⚠️ Exceptions (many exist!):</p>
+        <div class="flex flex-wrap gap-2">
+          <span class="example-tag">weird <button class="tts-btn" onclick="speak('weird')">🔊</button></span>
+          <span class="example-tag">science <button class="tts-btn" onclick="speak('science')">🔊</button></span>
+          <span class="example-tag">their <button class="tts-btn" onclick="speak('their')">🔊</button></span>
+        </div>
+      </div>
+    </div>
+    <div class="tip-box mb-4">
+      <p class="font-bold text-green-800">🌱 Teaching Note:</p>
+      <p class="text-green-700">This rule has MANY exceptions! It's helpful, but not always right. Teach it as a starting point, not a guarantee!</p>
+    </div>
+    <div class="catchy-box">
+      <p class="fredoka text-red-800 text-lg">🎵 "I before E, except after C—but sometimes it's different, you'll see!"</p>
+      <button class="tts-btn mt-1" onclick="speak('I before E, except after C, but sometimes it is different, you will see!')">🔊</button>
+    </div>
+  </div>
+  <div class="flex gap-3 justify-center">
+    <button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule3')">⬅️ Rule 3</button>
+    <button class="btn-green px-5 py-2 text-base" onclick="showPage('rule5')">Rule 5 ➡️</button>
+  </div>
+</div>
 
-            // 4. เลื่อนหน้าจอกลับไปบนสุด
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            
-            // 5. หยุดเสียงอ่านที่อาจจะค้างอยู่จากการกดหน้าก่อนๆ
-            window.speechSynthesis.cancel();
-        }
+<!-- ============ RULE 5 PAGE ============ -->
+<div id="page-rule5" class="page max-w-5xl mx-auto px-4 py-8">
+  <div class="rule-card p-6 mb-6">
+    <h2 class="fredoka text-3xl text-amber-900 mb-1">👑 Rule 5: The "QU" Rule</h2>
+    <p class="text-amber-700 font-semibold mb-4">Q and U always go together — they're best friends!</p>
+    <div class="video-frame mb-6">
+      <iframe width="100%" height="100%" src="https://www.youtube-nocookie.com/embed/?feature=oembed" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    </div>
+    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center">
+      <p class="text-7xl mb-3" style="animation: swing 2s infinite ease-in-out; display:inline-block">Q 🤝 U</p>
+      <p class="fredoka text-2xl text-amber-900">Q is almost always followed by U!</p>
+    </div>
+    <div class="mb-5">
+      <p class="font-bold text-amber-900 mb-3 text-lg">Examples:</p>
+      <div class="flex flex-wrap gap-3">
+        <span class="example-tag text-lg">queen <button class="tts-btn" onclick="speak('queen')">🔊</button></span>
+        <span class="example-tag text-lg">quick <button class="tts-btn" onclick="speak('quick')">🔊</button></span>
+        <span class="example-tag text-lg">question <button class="tts-btn" onclick="speak('question')">🔊</button></span>
+        <span class="example-tag text-lg">quiet <button class="tts-btn" onclick="speak('quiet')">🔊</button></span>
+        <span class="example-tag text-lg">quilt <button class="tts-btn" onclick="speak('quilt')">🔊</button></span>
+        <span class="example-tag text-lg">squeeze <button class="tts-btn" onclick="speak('squeeze')">🔊</button></span>
+      </div>
+    </div>
+    <div class="tip-box mb-4">
+      <p class="font-bold text-green-800">🌱 Teaching Tip:</p>
+      <p class="text-green-700">Tell students: "If you see Q, look for its partner U right after it! They're always together in English words."</p>
+    </div>
+    <div class="catchy-box">
+      <p class="fredoka text-red-800 text-lg">🎵 "Q and U go hand in hand— together they always stand!"</p>
+      <button class="tts-btn mt-1" onclick="speak('Q and U go hand in hand, together they always stand!')">🔊</button>
+    </div>
+  </div>
+  <div class="flex gap-3 justify-center flex-wrap">
+    <button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule4')">⬅️ Rule 4</button>
+    <button class="btn-barn px-5 py-2 text-base" onclick="startGame()">🎮 Play Harvest Game!</button>
+  </div>
+</div>
 
-        // ฟังก์ชันสำหรับอ่านออกเสียงข้อความ (Text-to-Speech)
-        function speakText(text) {
-            // ตรวจสอบว่าเบราว์เซอร์รองรับหรือไม่
-            if ('speechSynthesis' in window) {
-                // หยุดเสียงเก่าที่กำลังพูดอยู่ก่อน
-                window.speechSynthesis.cancel();
-                
-                // สร้างคำสั่งพูด
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'en-US'; // บังคับให้อ่านสำเนียงภาษาอังกฤษ
-                utterance.rate = 0.85;    // ปรับความเร็วให้อ่านช้าลงนิดหน่อยเพื่อให้เด็กๆ ฟังทัน
-                utterance.pitch = 1;      // ระดับเสียงปกติ
-                
-                // สั่งให้อ่าน
-                window.speechSynthesis.speak(utterance);
-            } else {
-                alert("Sorry, your browser doesn't support text-to-speech. (ขออภัย เบราว์เซอร์ของคุณไม่รองรับระบบอ่านออกเสียง)");
-            }
-        }
-    </script>
+<!-- ============ GAME PAGE ============ -->
+<div id="page-game" class="page max-w-5xl mx-auto px-4 py-8">
+  <div class="rule-card p-5 mb-4">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+      <h2 class="fredoka text-2xl md:text-3xl text-amber-900">🌽 Harvest Minigame</h2>
+      <div class="flex items-center gap-3">
+        <div class="wood-plank rounded-lg px-4 py-2">
+          <span class="fredoka text-straw text-xl" id="scoreDisplay">Score: 0 🌾</span>
+        </div>
+        <div class="wood-plank rounded-lg px-3 py-2">
+          <span class="text-straw font-bold" id="qNumDisplay">Q 1/10</span>
+        </div>
+      </div>
+    </div>
+    <!-- Progress bar -->
+    <div class="progress-bar-outer mb-4">
+      <div class="progress-bar-inner" id="gameProgress" style="width:0%"></div>
+    </div>
+    <!-- Farm grid -->
+    <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-5" id="farmGrid">
+      <div class="farm-cell" id="cell0"></div>
+      <div class="farm-cell" id="cell1"></div>
+      <div class="farm-cell" id="cell2"></div>
+      <div class="farm-cell" id="cell3"></div>
+      <div class="farm-cell" id="cell4"></div>
+      <div class="farm-cell" id="cell5"></div>
+    </div>
+    <!-- Question sign -->
+    <div class="wood-plank rounded-xl p-5 mb-5 text-center" id="questionArea">
+      <p class="text-straw text-sm mb-1 opacity-80">📋 Choose the correct spelling:</p>
+      <p class="fredoka text-2xl md:text-3xl text-white drop-shadow" id="questionText" style="color:#f5e6c8">Loading...</p>
+      <button class="tts-btn mt-2" id="questionTTSBtn" onclick="speakQuestion()">🔊</button>
+    </div>
+    <!-- Answer seed bags -->
+    <div class="grid grid-cols-2 gap-4" id="answersArea">
+      <div class="seed-bag p-4 text-center" id="bagA" onclick="handleAnswer(0)">
+        <div class="text-3xl mb-1">🌱</div>
+        <p class="fredoka text-xl text-straw" id="ansA" style="color:#f5e6c8">A</p>
+      </div>
+      <div class="seed-bag p-4 text-center" id="bagB" onclick="handleAnswer(1)">
+        <div class="text-3xl mb-1">🌱</div>
+        <p class="fredoka text-xl text-straw" id="ansB" style="color:#f5e6c8">B</p>
+      </div>
+    </div>
+    <!-- Feedback message -->
+    <div id="feedbackMsg" class="text-center mt-4 text-2xl font-bold fredoka hidden"></div>
+  </div>
+</div>
+
+<!-- ============ SCORE PAGE ============ -->
+<div id="page-score" class="page max-w-lg mx-auto px-4 py-12 text-center">
+  <div class="rule-card p-8">
+    <div class="text-6xl mb-4" id="scoreEmoji">🌽</div>
+    <h2 class="fredoka text-4xl text-amber-900 mb-2">Harvest Complete!</h2>
+    <p class="text-amber-700 font-semibold mb-5">Here's how your farm did:</p>
+    <div class="wood-plank rounded-2xl p-6 mb-5">
+      <p class="fredoka text-6xl" style="color:#f5e6c8" id="finalScore">0/10</p>
+      <p class="text-straw font-bold mt-1" id="finalScoreLabel" style="color:#f5e6c8">Points Harvested!</p>
+    </div>
+    <div class="flex justify-center gap-1 mb-6" id="starRow">
+      <span class="star" id="star1">⭐</span>
+      <span class="star" id="star2">⭐</span>
+      <span class="star" id="star3">⭐</span>
+    </div>
+    <p class="text-lg text-amber-800 mb-6 font-semibold" id="scoreMessage">Keep practicing!</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center">
+      <button class="btn-barn px-6 py-3 text-lg" onclick="startGame()">🔄 Play Again</button>
+      <button class="btn-wood px-6 py-3 text-lg" onclick="showPage('home')">🏠 Back to Farm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== NAVIGATION ======
+const pages = ['home','rule1','rule2','rule3','rule4','rule5','game','score'];
+function showPage(name) {
+  pages.forEach(p => {
+    const el = document.getElementById('page-'+p);
+    if (el) el.classList.remove('active');
+  });
+  const target = document.getElementById('page-'+name);
+  if (target) target.classList.add('active');
+  window.scrollTo(0,0);
+  const homeBtn = document.getElementById('homeBtn');
+  homeBtn.classList.toggle('hidden', name === 'home');
+}
+
+// ====== TTS ======
+function speak(text, rate = 0.85) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = rate;
+  window.speechSynthesis.speak(utter);
+}
+function speakQuestion() {
+  const qText = document.getElementById('questionText').textContent;
+  speak(qText);
+}
+
+// ====== GAME DATA ======
+const questions = [
+  { q: "She likes to ___ every morning.", correct: "dance", wrong: "danceing", hint: "Drop the E Rule" },
+  { q: "He is ___ very fast!", correct: "running", wrong: "runing", hint: "CVC Doubling Rule" },
+  { q: "She was ___ at the party.", correct: "sitting", wrong: "siting", hint: "CVC Doubling Rule" },
+  { q: "I ___ you with all my heart.", correct: "love", wrong: "lov", hint: "Silent E — no V ending" },
+  { q: "The sky is ___.", correct: "blue", wrong: "blu", hint: "Silent E — no U ending" },
+  { q: "I ___ you are right.", correct: "believe", wrong: "beleive", hint: "I before E rule" },
+  { q: "She is ___ a book.", correct: "writing", wrong: "writeing", hint: "Drop the E Rule" },
+  { q: "The ___ sits on the throne.", correct: "queen", wrong: "qeen", hint: "QU Rule — Q always needs U!" },
+  { q: "He ___ over the fence.", correct: "hopped", wrong: "hoped", hint: "CVC Doubling Rule" },
+  { q: "What is your ___?", correct: "question", wrong: "qestion", hint: "QU Rule" },
+];
+
+const crops = ['🌽','🥕','🍅','🥦','🌿','🍎','🫛','🌾','🥬','🍋'];
+const incorrectEffects = ['🍂','💨','🌵','💧'];
+
+let currentQ = 0, score = 0, answered = false, shuffledQs = [];
+let cellStatus = [false,false,false,false,false,false];
+
+function shuffle(arr) { return [...arr].sort(() => Math.random()-0.5); }
+
+function startGame() {
+  showPage('game');
+  currentQ = 0; score = 0; answered = false;
+  cellStatus = [false,false,false,false,false,false];
+  shuffledQs = shuffle(questions);
+  resetCells();
+  loadQuestion();
+}
+
+function resetCells() {
+  for (let i=0;i<6;i++) {
+    const c = document.getElementById('cell'+i);
+    c.innerHTML = '';
+    c.classList.remove('dry');
+  }
+}
+
+function loadQuestion() {
+  if (currentQ >= shuffledQs.length) { endGame(); return; }
+  answered = false;
+  const q = shuffledQs[currentQ];
+  document.getElementById('questionText').textContent = q.q;
+  document.getElementById('qNumDisplay').textContent = `Q ${currentQ+1}/${shuffledQs.length}`;
+  document.getElementById('gameProgress').style.width = `${(currentQ/shuffledQs.length)*100}%`;
+  document.getElementById('feedbackMsg').classList.add('hidden');
+
+  // Randomize answer positions
+  const opts = shuffle([{text:q.correct,correct:true},{text:q.wrong,correct:false}]);
+  document.getElementById('ansA').textContent = opts[0].text;
+  document.getElementById('ansB').textContent = opts[1].text;
+  document.getElementById('bagA').dataset.correct = opts[0].correct;
+  document.getElementById('bagB').dataset.correct = opts[1].correct;
+  document.getElementById('bagA').className = 'seed-bag p-4 text-center';
+  document.getElementById('bagB').className = 'seed-bag p-4 text-center';
+  document.getElementById('bagA').onclick = () => handleAnswer(0);
+  document.getElementById('bagB').onclick = () => handleAnswer(1);
+  speak(q.q, 0.85);
+}
+
+function handleAnswer(bagIndex) {
+  if (answered) return;
+  answered = true;
+  const bagEl = document.getElementById(bagIndex === 0 ? 'bagA' : 'bagB');
+  const isCorrect = bagEl.dataset.correct === 'true';
+  const fb = document.getElementById('feedbackMsg');
+  fb.classList.remove('hidden');
+
+  if (isCorrect) {
+    score++;
+    document.getElementById('scoreDisplay').textContent = `Score: ${score} 🌾`;
+    bagEl.classList.add('correct');
+    fb.textContent = '✅ Correct! Great harvest! 🌽';
+    fb.className = 'text-center mt-4 text-xl font-bold fredoka text-green-700';
+    // Plant a crop in next empty cell
+    const cellIdx = cellStatus.indexOf(false);
+    if (cellIdx !== -1) {
+      cellStatus[cellIdx] = 'crop';
+      const cell = document.getElementById('cell'+cellIdx);
+      const crop = document.createElement('span');
+      crop.className = 'crop-emoji';
+      crop.textContent = crops[Math.floor(Math.random()*crops.length)];
+      cell.appendChild(crop);
+    }
+    speak('Correct! Great job!', 1.0);
+  } else {
+    bagEl.classList.add('wrong');
+    fb.textContent = `❌ Try again! Hint: ${shuffledQs[currentQ].hint} 🍂`;
+    fb.className = 'text-center mt-4 text-xl font-bold fredoka text-red-700';
+    // Add dry cell effect
+    const cellIdx = cellStatus.indexOf(false);
+    if (cellIdx !== -1) {
+      cellStatus[cellIdx] = 'dry';
+      const cell = document.getElementById('cell'+cellIdx);
+      cell.classList.add('dry');
+      for (let i=0;i<2;i++) {
+        const leaf = document.createElement('span');
+        leaf.className = 'leaf-emoji';
+        leaf.style.left = (20+Math.random()*60)+'%';
+        leaf.style.top = '10%';
+        leaf.textContent = incorrectEffects[Math.floor(Math.random()*incorrectEffects.length)];
+        cell.appendChild(leaf);
+        setTimeout(()=>leaf.remove(),1200);
+      }
+    }
+    speak('Not quite. Try again!', 1.0);
+  }
+
+  setTimeout(() => {
+    currentQ++;
+    loadQuestion();
+  }, 2000);
+}
+
+function endGame() {
+  showPage('score');
+  document.getElementById('finalScore').textContent = `${score}/${shuffledQs.length}`;
+  document.getElementById('gameProgress').style.width = '100%';
+
+  const pct = score / shuffledQs.length;
+  let emoji = '🌱', msg = 'Keep practicing, farmer! The harvest will come!';
+  if (pct >= 0.9) { emoji = '🏆'; msg = 'Amazing! A legendary harvest! 🎉'; }
+  else if (pct >= 0.7) { emoji = '🌽'; msg = 'Great job! A bountiful harvest! 🌾'; }
+  else if (pct >= 0.5) { emoji = '🥕'; msg = 'Good effort! Keep tending your farm! 🚜'; }
+
+  document.getElementById('scoreEmoji').textContent = emoji;
+  document.getElementById('scoreMessage').textContent = msg;
+  document.getElementById('finalScoreLabel').textContent = 'Points Harvested!';
+
+  // Stars
+  document.getElementById('star1').classList.toggle('lit', pct >= 0.4);
+  document.getElementById('star2').classList.toggle('lit', pct >= 0.7);
+  document.getElementById('star3').classList.toggle('lit', pct >= 0.9);
+
+  speak(msg, 0.9);
+}
+
+// Init
+showPage('home');
+</script>
 </body>
 </html>
