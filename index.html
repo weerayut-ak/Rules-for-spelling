@@ -70,7 +70,14 @@ h1,h2,h3,.fredoka{font-family:'Fredoka One',cursive;}
 .video-thumbnail .play-btn{width:70px;height:70px;background:rgba(192,57,43,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;transition:transform .2s;box-shadow:0 4px 20px rgba(0,0,0,.5);}
 .video-thumbnail:hover .play-btn{transform:scale(1.1);}
 .video-thumbnail p{color:#f5e6c8;font-family:'Fredoka One',cursive;margin-top:12px;font-size:1rem;}
-.video-wrapper iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+.video-wrapper iframe, .video-wrapper video {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  border: none;
+  object-fit: cover; /* ช่วยให้วิดีโอเต็มกรอบไม้ */
+}
 /* Game type tabs */
 .game-tab{font-family:'Fredoka One',cursive;padding:8px 16px;border-radius:8px 8px 0 0;cursor:pointer;transition:all .2s;border:3px solid transparent;font-size:.9rem;}
 .game-tab.active{background:linear-gradient(135deg,#8b5e3c,#7a5230);color:#f5e6c8;border-color:#5a3a22;}
@@ -408,15 +415,18 @@ function stopAllVideos(){
 function loadVideo(wrapperId, src, title){
   const w=document.getElementById(wrapperId);
   if(!w) return;
-  const thumb=w.querySelector('.video-thumbnail');
-  const iframe=document.createElement('iframe');
-  iframe.src=src;
-  iframe.setAttribute('allowfullscreen','');
-  iframe.setAttribute('allow','autoplay;encrypted-media');
-  w.appendChild(iframe);
-  if(thumb) thumb.style.display='none';
-  videoIds[wrapperId]=src;
-  w.onclick=null; // prevent double-click
+  
+  // ล้างเนื้อหาเดิม (Thumbnail) ออกเพื่อให้วิดีโอเข้าไปแทนที่ได้พอดี
+  w.innerHTML = ''; 
+
+  // สร้าง Element สำหรับเล่นวิดีโอ
+  const videoTag = src.includes('.mp4') ? 
+    `<video controls autoplay style="width:100%;height:100%;"><source src="${src}" type="video/mp4"></video>` :
+    `<iframe src="${src}" allow="autoplay;encrypted-media" allowfullscreen style="width:100%;height:100%;"></iframe>`;
+  
+  w.innerHTML = videoTag;
+  videoIds[wrapperId] = src;
+  w.onclick = null; 
 }
 
 function showPage(name){
