@@ -7,982 +7,1053 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --barn-red: #c0392b;
-    --wood-dark: #6b3a2a;
-    --wood-mid: #8b5e3c;
-    --wood-light: #c8956c;
-    --straw: #f5e6c8;
-    --straw-dark: #e8d5a3;
-    --green-field: #4a7c59;
-    --green-light: #7ab648;
-    --amber: #d4870e;
-    --dirt: #8b6914;
-    --sky: #a8d8ea;
-  }
-  * { box-sizing: border-box; }
-  body {
-    font-family: 'Nunito', sans-serif;
-    background-color: var(--straw);
-    background-image:
-      repeating-linear-gradient(0deg, transparent, transparent 40px, rgba(210,185,130,0.18) 40px, rgba(210,185,130,0.18) 41px),
-      repeating-linear-gradient(90deg, transparent, transparent 40px, rgba(210,185,130,0.18) 40px, rgba(210,185,130,0.18) 41px);
-    min-height: 100vh;
-  }
-  h1, h2, h3, .fredoka { font-family: 'Fredoka One', cursive; }
-
-  /* Wood plank texture */
-  .wood-plank {
-    background: linear-gradient(135deg, #8b5e3c 0%, #a0714f 25%, #7a5230 50%, #9a6845 75%, #8b5e3c 100%);
-    border: 3px solid #5a3a22;
-    box-shadow: 0 4px 0 #4a2a12, 0 6px 12px rgba(0,0,0,0.3);
-    position: relative;
-  }
-  .wood-plank::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: repeating-linear-gradient(90deg, transparent, transparent 20px, rgba(255,255,255,0.04) 20px, rgba(255,255,255,0.04) 21px);
-    pointer-events: none;
-  }
-
-  /* Barn board */
-  .barn-board {
-    background: linear-gradient(180deg, #c0392b 0%, #a93226 50%, #c0392b 100%);
-    border: 3px solid #7b241c;
-    box-shadow: 0 4px 0 #5b1510, 0 6px 16px rgba(0,0,0,0.4);
-    position: relative;
-  }
-
-  /* Seed bag style */
-  .seed-bag {
-    background: linear-gradient(135deg, #8b7355 0%, #a08060 50%, #7a6040 100%);
-    border: 3px solid #5a4030;
-    border-radius: 12px 12px 16px 16px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    transition: all 0.15s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-  }
-  .seed-bag::before {
-    content: '';
-    position: absolute; top: 0; left: 0; right: 0; height: 8px;
-    background: #6a4f35;
-    border-radius: 8px 8px 0 0;
-  }
-  .seed-bag:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 8px 16px rgba(0,0,0,0.4); }
-  .seed-bag:active { transform: translateY(1px); }
-  .seed-bag.correct { background: linear-gradient(135deg, #4a7c59, #3a6b48) !important; border-color: #2a5030 !important; }
-  .seed-bag.wrong { background: linear-gradient(135deg, #8b3a2a, #7b2a1a) !important; border-color: #5b1510 !important; }
-
-  /* Farm grid cell */
-  .farm-cell {
-    background: linear-gradient(180deg, #8b6914 0%, #7a5a10 100%);
-    border: 2px solid #5a3a08;
-    border-radius: 8px;
-    position: relative;
-    overflow: hidden;
-    transition: background 0.5s;
-    min-height: 80px;
-  }
-  .farm-cell.dry { background: linear-gradient(180deg, #9e7b4a 0%, #8b6a35 100%) !important; }
-  .farm-cell .crop-emoji {
-    position: absolute;
-    font-size: 2rem;
-    bottom: 4px;
-    left: 50%;
-    transform: translateX(-50%) translateY(0);
-    animation: cropPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    opacity: 0;
-  }
-  .farm-cell .leaf-emoji {
-    position: absolute;
-    font-size: 1.4rem;
-    animation: leafFall 1.2s ease-in forwards;
-    opacity: 0;
-  }
-  @keyframes cropPop {
-    0% { opacity: 0; transform: translateX(-50%) translateY(30px) scale(0.3); }
-    60% { opacity: 1; transform: translateX(-50%) translateY(-8px) scale(1.2); }
-    100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-  }
-  @keyframes leafFall {
-    0% { opacity: 1; top: 10%; left: 30%; transform: rotate(0deg); }
-    50% { opacity: 0.8; left: 55%; transform: rotate(45deg); }
-    100% { opacity: 0; top: 85%; left: 40%; transform: rotate(90deg); }
-  }
-  @keyframes shimmer { 0%,100%{opacity:1} 50%{opacity:0.7} }
-  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
-  @keyframes fadeInUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes swing { 0%,100%{transform:rotate(-3deg)} 50%{transform:rotate(3deg)} }
-
-  .page { display: none; animation: fadeInUp 0.35s ease; }
-  .page.active { display: block; }
-
-  /* Wooden sign button */
-  .btn-wood {
-    font-family: 'Fredoka One', cursive;
-    background: linear-gradient(135deg, #8b5e3c 0%, #a0714f 50%, #8b5e3c 100%);
-    border: 3px solid #5a3a22;
-    box-shadow: 0 4px 0 #4a2a12, 0 6px 12px rgba(0,0,0,0.25);
-    color: #f5e6c8;
-    border-radius: 8px;
-    transition: all 0.15s;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px;
-  }
-  .btn-wood:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #4a2a12, 0 8px 16px rgba(0,0,0,0.3); }
-  .btn-wood:active { transform: translateY(2px); box-shadow: 0 2px 0 #4a2a12; }
-  .btn-barn {
-    font-family: 'Fredoka One', cursive;
-    background: linear-gradient(135deg, #c0392b, #a93226);
-    border: 3px solid #7b241c;
-    box-shadow: 0 4px 0 #5b1510, 0 6px 12px rgba(0,0,0,0.25);
-    color: #fff;
-    border-radius: 8px;
-    transition: all 0.15s;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
-    cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px;
-  }
-  .btn-barn:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #5b1510; }
-  .btn-barn:active { transform: translateY(2px); box-shadow: 0 2px 0 #5b1510; }
-  .btn-green {
-    font-family: 'Fredoka One', cursive;
-    background: linear-gradient(135deg, #4a7c59, #3a6b48);
-    border: 3px solid #2a5030;
-    box-shadow: 0 4px 0 #1a3020, 0 6px 12px rgba(0,0,0,0.25);
-    color: #fff;
-    border-radius: 8px;
-    transition: all 0.15s;
-    cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px;
-  }
-  .btn-green:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #1a3020; }
-  .btn-green:active { transform: translateY(2px); box-shadow: 0 2px 0 #1a3020; }
-
-  .tts-btn {
-    background: none; border: none; cursor: pointer;
-    font-size: 1rem; padding: 2px 4px;
-    transition: transform 0.2s;
-    display: inline-flex; align-items: center;
-  }
-  .tts-btn:hover { transform: scale(1.3); }
-
-  /* Rule card */
-  .rule-card {
-    background: linear-gradient(160deg, #fffbf0, #f9f0d8);
-    border: 3px solid #c8956c;
-    border-radius: 16px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  }
-  .example-tag {
-    background: linear-gradient(135deg, #f5e6c8, #e8d5a3);
-    border: 2px solid #c8956c;
-    border-radius: 8px;
-    padding: 4px 12px;
-    font-weight: 700;
-    color: #6b3a2a;
-    display: inline-block;
-    margin: 3px;
-  }
-  .catchy-box {
-    background: linear-gradient(135deg, #c0392b15, #c0392b08);
-    border-left: 5px solid #c0392b;
-    border-radius: 0 8px 8px 0;
-    padding: 12px 16px;
-  }
-  .tip-box {
-    background: linear-gradient(135deg, #4a7c5915, #4a7c5908);
-    border-left: 5px solid #4a7c59;
-    border-radius: 0 8px 8px 0;
-    padding: 12px 16px;
-  }
-  .exception-box {
-    background: linear-gradient(135deg, #d4870e15, #d4870e08);
-    border-left: 5px solid #d4870e;
-    border-radius: 0 8px 8px 0;
-    padding: 12px 16px;
-  }
-  .subrule-header {
-    background: linear-gradient(135deg, #8b5e3c, #7a5230);
-    color: var(--straw);
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-family: 'Fredoka One', cursive;
-    font-size: 1.1rem;
-    display: flex; align-items: center; gap: 8px;
-  }
-  /* Fence decoration */
-  .fence-top {
-    border-top: 6px solid #8b5e3c;
-    position: relative;
-  }
-  .fence-top::before {
-    content: '';
-    position: absolute;
-    top: -12px; left: 0; right: 0;
-    height: 6px;
-    background: repeating-linear-gradient(90deg, #8b5e3c 0, #8b5e3c 18px, transparent 18px, transparent 30px);
-  }
-
-  /* Score stars */
-  .star { font-size: 1.8rem; filter: grayscale(1); transition: filter 0.3s; }
-  .star.lit { filter: grayscale(0); }
-
-  /* Progress bar */
-  .progress-bar-outer {
-    background: #5a3a22;
-    border-radius: 999px;
-    border: 2px solid #4a2a12;
-    overflow: hidden;
-    height: 18px;
-  }
-  .progress-bar-inner {
-    background: linear-gradient(90deg, #7ab648, #4a7c59);
-    height: 100%;
-    border-radius: 999px;
-    transition: width 0.5s ease;
-    box-shadow: 0 0 8px rgba(122,182,72,0.5);
-  }
-
-  /* Scrollbar */
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: #e8d5a3; }
-  ::-webkit-scrollbar-thumb { background: #8b5e3c; border-radius: 4px; }
-
-  /* Speaking animation */
-  .speaking { animation: shimmer 0.5s infinite; }
-
-  .menu-card {
-    background: linear-gradient(160deg, #fffbf0, #f5e6c8);
-    border: 3px solid #c8956c;
-    border-radius: 16px;
-    box-shadow: 0 6px 0 #8b5e3c, 0 8px 20px rgba(0,0,0,0.2);
-    transition: all 0.2s;
-    cursor: pointer;
-  }
-  .menu-card:hover { transform: translateY(-4px); box-shadow: 0 10px 0 #8b5e3c, 0 12px 24px rgba(0,0,0,0.25); }
-
-  .video-frame {
-    background: #1a1a1a;
-    border: 4px solid #5a3a22;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-    aspect-ratio: 16/9;
-    width: 100%;
-  }
+:root{--barn-red:#c0392b;--wood-dark:#6b3a2a;--wood-mid:#8b5e3c;--wood-light:#c8956c;--straw:#f5e6c8;--straw-dark:#e8d5a3;--green-field:#4a7c59;--green-light:#7ab648;--amber:#d4870e;--dirt:#8b6914;}
+*{box-sizing:border-box;}
+body{font-family:'Nunito',sans-serif;background-color:var(--straw);background-image:repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(210,185,130,.18) 40px,rgba(210,185,130,.18) 41px),repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(210,185,130,.18) 40px,rgba(210,185,130,.18) 41px);min-height:100vh;}
+h1,h2,h3,.fredoka{font-family:'Fredoka One',cursive;}
+.wood-plank{background:linear-gradient(135deg,#8b5e3c 0%,#a0714f 25%,#7a5230 50%,#9a6845 75%,#8b5e3c 100%);border:3px solid #5a3a22;box-shadow:0 4px 0 #4a2a12,0 6px 12px rgba(0,0,0,.3);position:relative;}
+.wood-plank::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 20px,rgba(255,255,255,.04) 20px,rgba(255,255,255,.04) 21px);pointer-events:none;}
+.barn-board{background:linear-gradient(180deg,#c0392b 0%,#a93226 50%,#c0392b 100%);border:3px solid #7b241c;box-shadow:0 4px 0 #5b1510,0 6px 16px rgba(0,0,0,.4);position:relative;}
+.seed-bag{background:linear-gradient(135deg,#8b7355 0%,#a08060 50%,#7a6040 100%);border:3px solid #5a4030;border-radius:12px 12px 16px 16px;box-shadow:0 4px 8px rgba(0,0,0,.3);transition:all .15s ease;cursor:pointer;position:relative;overflow:hidden;}
+.seed-bag::before{content:'';position:absolute;top:0;left:0;right:0;height:8px;background:#6a4f35;border-radius:8px 8px 0 0;}
+.seed-bag:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 8px 16px rgba(0,0,0,.4);}
+.seed-bag:active{transform:translateY(1px);}
+.seed-bag.correct{background:linear-gradient(135deg,#4a7c59,#3a6b48)!important;border-color:#2a5030!important;}
+.seed-bag.wrong{background:linear-gradient(135deg,#8b3a2a,#7b2a1a)!important;border-color:#5b1510!important;}
+.seed-bag.disabled{pointer-events:none;opacity:.7;}
+.farm-cell{background:linear-gradient(180deg,#8b6914 0%,#7a5a10 100%);border:2px solid #5a3a08;border-radius:8px;position:relative;overflow:hidden;transition:background .5s;min-height:70px;}
+.farm-cell.dry{background:linear-gradient(180deg,#9e7b4a 0%,#8b6a35 100%)!important;}
+.farm-cell .crop-emoji{position:absolute;font-size:2rem;bottom:4px;left:50%;transform:translateX(-50%) translateY(0);animation:cropPop .6s cubic-bezier(.175,.885,.32,1.275) forwards;opacity:0;}
+.farm-cell .leaf-emoji{position:absolute;font-size:1.4rem;animation:leafFall 1.2s ease-in forwards;opacity:0;}
+@keyframes cropPop{0%{opacity:0;transform:translateX(-50%) translateY(30px) scale(.3)}60%{opacity:1;transform:translateX(-50%) translateY(-8px) scale(1.2)}100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}}
+@keyframes leafFall{0%{opacity:1;top:10%;left:30%;transform:rotate(0)}50%{opacity:.8;left:55%;transform:rotate(45deg)}100%{opacity:0;top:85%;left:40%;transform:rotate(90deg)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes swing{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes starPop{0%{transform:scale(0) rotate(-30deg);opacity:0}70%{transform:scale(1.3) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+.page{display:none;animation:fadeInUp .35s ease;}
+.page.active{display:block;}
+.btn-wood{font-family:'Fredoka One',cursive;background:linear-gradient(135deg,#8b5e3c 0%,#a0714f 50%,#8b5e3c 100%);border:3px solid #5a3a22;box-shadow:0 4px 0 #4a2a12,0 6px 12px rgba(0,0,0,.25);color:#f5e6c8;border-radius:8px;transition:all .15s;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn-wood:hover{transform:translateY(-2px);box-shadow:0 6px 0 #4a2a12,0 8px 16px rgba(0,0,0,.3);}
+.btn-wood:active{transform:translateY(2px);box-shadow:0 2px 0 #4a2a12;}
+.btn-barn{font-family:'Fredoka One',cursive;background:linear-gradient(135deg,#c0392b,#a93226);border:3px solid #7b241c;box-shadow:0 4px 0 #5b1510,0 6px 12px rgba(0,0,0,.25);color:#fff;border-radius:8px;transition:all .15s;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn-barn:hover{transform:translateY(-2px);box-shadow:0 6px 0 #5b1510;}
+.btn-barn:active{transform:translateY(2px);box-shadow:0 2px 0 #5b1510;}
+.btn-green{font-family:'Fredoka One',cursive;background:linear-gradient(135deg,#4a7c59,#3a6b48);border:3px solid #2a5030;box-shadow:0 4px 0 #1a3020,0 6px 12px rgba(0,0,0,.25);color:#fff;border-radius:8px;transition:all .15s;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn-green:hover{transform:translateY(-2px);box-shadow:0 6px 0 #1a3020;}
+.btn-green:active{transform:translateY(2px);box-shadow:0 2px 0 #1a3020;}
+.btn-amber{font-family:'Fredoka One',cursive;background:linear-gradient(135deg,#d4870e,#b8720c);border:3px solid #8b5a08;box-shadow:0 4px 0 #6b4008,0 6px 12px rgba(0,0,0,.25);color:#fff;border-radius:8px;transition:all .15s;cursor:pointer;display:inline-flex;align-items:center;gap:6px;}
+.btn-amber:hover{transform:translateY(-2px);box-shadow:0 6px 0 #6b4008;}
+.tts-btn{background:none;border:none;cursor:pointer;font-size:1rem;padding:2px 4px;transition:transform .2s;display:inline-flex;align-items:center;}
+.tts-btn:hover{transform:scale(1.3);}
+.tts-btn.speaking{animation:pulse .4s infinite;}
+.rule-card{background:linear-gradient(160deg,#fffbf0,#f9f0d8);border:3px solid #c8956c;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.12);}
+.example-tag{background:linear-gradient(135deg,#f5e6c8,#e8d5a3);border:2px solid #c8956c;border-radius:8px;padding:4px 12px;font-weight:700;color:#6b3a2a;display:inline-block;margin:3px;}
+.catchy-box{background:linear-gradient(135deg,rgba(192,57,43,.08),rgba(192,57,43,.04));border-left:5px solid #c0392b;border-radius:0 8px 8px 0;padding:12px 16px;}
+.tip-box{background:linear-gradient(135deg,rgba(74,124,89,.08),rgba(74,124,89,.04));border-left:5px solid #4a7c59;border-radius:0 8px 8px 0;padding:12px 16px;}
+.exception-box{background:linear-gradient(135deg,rgba(212,135,14,.08),rgba(212,135,14,.04));border-left:5px solid #d4870e;border-radius:0 8px 8px 0;padding:12px 16px;}
+.subrule-header{background:linear-gradient(135deg,#8b5e3c,#7a5230);color:var(--straw);border-radius:8px;padding:8px 16px;font-family:'Fredoka One',cursive;font-size:1.1rem;display:flex;align-items:center;gap:8px;}
+.star{font-size:1.8rem;filter:grayscale(1);transition:all .4s;}
+.star.lit{filter:grayscale(0);animation:starPop .4s ease;}
+.progress-bar-outer{background:#5a3a22;border-radius:999px;border:2px solid #4a2a12;overflow:hidden;height:18px;}
+.progress-bar-inner{background:linear-gradient(90deg,#7ab648,#4a7c59);height:100%;border-radius:999px;transition:width .5s ease;box-shadow:0 0 8px rgba(122,182,72,.5);}
+::-webkit-scrollbar{width:8px;}
+::-webkit-scrollbar-track{background:#e8d5a3;}
+::-webkit-scrollbar-thumb{background:#8b5e3c;border-radius:4px;}
+.menu-card{background:linear-gradient(160deg,#fffbf0,#f5e6c8);border:3px solid #c8956c;border-radius:16px;box-shadow:0 6px 0 #8b5e3c,0 8px 20px rgba(0,0,0,.2);transition:all .2s;cursor:pointer;}
+.menu-card:hover{transform:translateY(-4px);box-shadow:0 10px 0 #8b5e3c,0 12px 24px rgba(0,0,0,.25);}
+/* Video container - lazy load */
+.video-wrapper{background:#1a1a1a;border:4px solid #5a3a22;border-radius:12px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.3);aspect-ratio:16/9;width:100%;position:relative;cursor:pointer;}
+.video-thumbnail{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#2a1a0a,#1a0a00);transition:opacity .3s;}
+.video-thumbnail .play-btn{width:70px;height:70px;background:rgba(192,57,43,.9);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;transition:transform .2s;box-shadow:0 4px 20px rgba(0,0,0,.5);}
+.video-thumbnail:hover .play-btn{transform:scale(1.1);}
+.video-thumbnail p{color:#f5e6c8;font-family:'Fredoka One',cursive;margin-top:12px;font-size:1rem;}
+.video-wrapper iframe{position:absolute;inset:0;width:100%;height:100%;border:none;}
+/* Game type tabs */
+.game-tab{font-family:'Fredoka One',cursive;padding:8px 16px;border-radius:8px 8px 0 0;cursor:pointer;transition:all .2s;border:3px solid transparent;font-size:.9rem;}
+.game-tab.active{background:linear-gradient(135deg,#8b5e3c,#7a5230);color:#f5e6c8;border-color:#5a3a22;}
+.game-tab:not(.active){background:rgba(139,94,60,.2);color:#6b3a2a;border-color:rgba(139,94,60,.3);}
+/* Fill blank input */
+.fill-input{font-family:'Fredoka One',cursive;font-size:1.4rem;background:linear-gradient(135deg,#fffbf0,#f5e6c8);border:3px solid #c8956c;border-radius:10px;padding:8px 16px;color:#6b3a2a;text-align:center;width:100%;max-width:280px;outline:none;transition:border-color .2s;}
+.fill-input:focus{border-color:#c0392b;box-shadow:0 0 0 3px rgba(192,57,43,.2);}
+.fill-input.correct-input{border-color:#4a7c59;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);}
+.fill-input.wrong-input{border-color:#c0392b;background:linear-gradient(135deg,#fce4ec,#f8bbd0);animation:shake .4s ease;}
+/* Word sort */
+.sort-word{font-family:'Fredoka One',cursive;background:linear-gradient(135deg,#f5e6c8,#e8d5a3);border:3px solid #c8956c;border-radius:10px;padding:8px 18px;cursor:grab;font-size:1.1rem;color:#6b3a2a;transition:all .15s;user-select:none;display:inline-block;margin:4px;}
+.sort-word:hover{transform:translateY(-2px) scale(1.05);box-shadow:0 4px 12px rgba(0,0,0,.2);}
+.sort-word.placed{opacity:.4;pointer-events:none;}
+.sort-bucket{min-height:60px;background:rgba(139,94,60,.1);border:2px dashed #c8956c;border-radius:12px;padding:8px;display:flex;flex-wrap:wrap;align-items:center;gap:4px;transition:background .2s;}
+.sort-bucket.drag-over{background:rgba(74,124,89,.15);border-color:#4a7c59;}
+.sort-bucket .sort-word{cursor:pointer;}
+/* Level badge */
+.level-badge{background:linear-gradient(135deg,#d4870e,#b8720c);border:2px solid #8b5a08;border-radius:999px;padding:3px 12px;font-family:'Fredoka One',cursive;font-size:.85rem;color:#fff;}
+/* Game mode badge */
+.mode-badge{padding:3px 10px;border-radius:6px;font-weight:700;font-size:.8rem;display:inline-flex;align-items:center;gap:4px;}
+.shake{animation:shake .4s ease;}
+/* Streak display */
+.streak-fire{font-size:1.4rem;transition:transform .3s;}
+.streak-fire.active{animation:pulse .5s infinite;}
 </style>
 </head>
 <body>
 
-<!-- ============ HEADER ============ -->
 <header class="barn-board text-white text-center py-3 px-4 sticky top-0 z-50">
   <div class="max-w-5xl mx-auto flex items-center justify-between">
-    <button id="homeBtn" class="btn-wood px-3 py-2 text-sm hidden" onclick="showPage('home')">🏠 Home</button>
-    <h1 class="fredoka text-2xl md:text-3xl flex-1 text-center drop-shadow-lg">
-      🌾 Spelling Rules Farm 🌾
-    </h1>
+    <button id="homeBtn" class="btn-wood px-3 py-2 text-sm hidden" onclick="goHome()">🏠 Home</button>
+    <h1 class="fredoka text-2xl md:text-3xl flex-1 text-center drop-shadow-lg">🌾 Spelling Rules Farm 🌾</h1>
     <div class="w-24 hidden md:block"></div>
   </div>
 </header>
 
-<!-- ============ HOME PAGE ============ -->
+<!-- ======== HOME ======== -->
 <div id="page-home" class="page active max-w-5xl mx-auto px-4 py-8">
   <div class="text-center mb-8">
-    <p class="text-6xl mb-3" style="animation: bounce 2s infinite">🧑‍🌾</p>
+    <p class="text-6xl mb-3" style="animation:bounce 2s infinite">🧑‍🌾</p>
     <h2 class="fredoka text-3xl md:text-4xl text-amber-900 mb-2">Welcome to Spelling Rules Farm!</h2>
     <p class="text-lg text-amber-800 font-semibold">Pick a rule to harvest some knowledge! 🌱</p>
   </div>
-
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mb-8">
-    <!-- Rule 1 -->
-    <div class="menu-card p-5" onclick="showPage('rule1')">
-      <div class="text-4xl mb-3">🔇</div>
-      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 1</h3>
-      <p class="font-bold text-amber-800">The Eight Rules of Silent "E"</p>
-      <p class="text-sm text-amber-700 mt-2">love, bike, face, age...</p>
-      <div class="mt-3 flex gap-1">
-        <span class="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold">8 sub-rules</span>
-      </div>
-    </div>
-    <!-- Rule 2 -->
-    <div class="menu-card p-5" onclick="showPage('rule2')">
-      <div class="text-4xl mb-3">📝</div>
-      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 2</h3>
-      <p class="font-bold text-amber-800">CVC Doubling Rule</p>
-      <p class="text-sm text-amber-700 mt-2">run→running, sit→sitting...</p>
-      <div class="mt-3 flex gap-1">
-        <span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-bold">+ing / +ed</span>
-      </div>
-    </div>
-    <!-- Rule 3 -->
-    <div class="menu-card p-5" onclick="showPage('rule3')">
-      <div class="text-4xl mb-3">✂️</div>
-      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 3</h3>
-      <p class="font-bold text-amber-800">Drop the "E" Rule</p>
-      <p class="text-sm text-amber-700 mt-2">make→making, dance→dancing...</p>
-      <div class="mt-3 flex gap-1">
-        <span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-bold">Silent E + -ing</span>
-      </div>
-    </div>
-    <!-- Rule 4 -->
-    <div class="menu-card p-5" onclick="showPage('rule4')">
-      <div class="text-4xl mb-3">🅸</div>
-      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 4</h3>
-      <p class="font-bold text-amber-800">I Before E Rule</p>
-      <p class="text-sm text-amber-700 mt-2">believe, receive...</p>
-      <div class="mt-3 flex gap-1">
-        <span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-bold">Classic Rule</span>
-      </div>
-    </div>
-    <!-- Rule 5 -->
-    <div class="menu-card p-5" onclick="showPage('rule5')">
-      <div class="text-4xl mb-3">👑</div>
-      <h3 class="fredoka text-xl text-amber-900 mb-1">Rule 5</h3>
-      <p class="font-bold text-amber-800">"QU" Rule</p>
-      <p class="text-sm text-amber-700 mt-2">queen, quick, question...</p>
-      <div class="mt-3 flex gap-1">
-        <span class="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded-full font-bold">Always Together</span>
-      </div>
-    </div>
-    <!-- Mini Game -->
-    <div class="menu-card p-5 cursor-pointer" style="background: linear-gradient(160deg, #f0fff0, #d8f5d8); border-color: #4a7c59;" onclick="startGame()">
-      <div class="text-4xl mb-3">🎮</div>
-      <h3 class="fredoka text-xl text-green-900 mb-1">Mini Game</h3>
-      <p class="font-bold text-green-800">Harvest Minigame</p>
-      <p class="text-sm text-green-700 mt-2">Test your spelling skills!</p>
-      <div class="mt-3 flex gap-1">
-        <span class="text-xs bg-green-300 text-green-900 px-2 py-1 rounded-full font-bold">🌽 Harvest time!</span>
-      </div>
-    </div>
+    <div class="menu-card p-5" onclick="showPage('rule1')"><div class="text-4xl mb-3">🔇</div><h3 class="fredoka text-xl text-amber-900 mb-1">Rule 1</h3><p class="font-bold text-amber-800">The Eight Rules of Silent "E"</p><p class="text-sm text-amber-700 mt-2">love, bike, face, age...</p><div class="mt-3"><span class="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold">5 sub-rules</span></div></div>
+    <div class="menu-card p-5" onclick="showPage('rule2')"><div class="text-4xl mb-3">📝</div><h3 class="fredoka text-xl text-amber-900 mb-1">Rule 2</h3><p class="font-bold text-amber-800">CVC Doubling Rule</p><p class="text-sm text-amber-700 mt-2">run→running, sit→sitting...</p><div class="mt-3"><span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-bold">+ing / +ed</span></div></div>
+    <div class="menu-card p-5" onclick="showPage('rule3')"><div class="text-4xl mb-3">✂️</div><h3 class="fredoka text-xl text-amber-900 mb-1">Rule 3</h3><p class="font-bold text-amber-800">Drop the "E" Rule</p><p class="text-sm text-amber-700 mt-2">make→making, dance→dancing...</p><div class="mt-3"><span class="text-xs bg-red-200 text-red-800 px-2 py-1 rounded-full font-bold">Silent E + -ing</span></div></div>
+    <div class="menu-card p-5" onclick="showPage('rule4')"><div class="text-4xl mb-3">🅸</div><h3 class="fredoka text-xl text-amber-900 mb-1">Rule 4</h3><p class="font-bold text-amber-800">I Before E Rule</p><p class="text-sm text-amber-700 mt-2">believe, receive...</p><div class="mt-3"><span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-bold">Classic Rule</span></div></div>
+    <div class="menu-card p-5" onclick="showPage('rule5')"><div class="text-4xl mb-3">👑</div><h3 class="fredoka text-xl text-amber-900 mb-1">Rule 5</h3><p class="font-bold text-amber-800">"QU" Rule</p><p class="text-sm text-amber-700 mt-2">queen, quick, question...</p><div class="mt-3"><span class="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded-full font-bold">Always Together</span></div></div>
+    <div class="menu-card p-5" style="background:linear-gradient(160deg,#f0fff0,#d8f5d8);border-color:#4a7c59;" onclick="showPage('gameselect')"><div class="text-4xl mb-3">🎮</div><h3 class="fredoka text-xl text-green-900 mb-1">Mini Games</h3><p class="font-bold text-green-800">3 Game Modes!</p><p class="text-sm text-green-700 mt-2">30 levels of fun!</p><div class="mt-3 flex gap-1 flex-wrap"><span class="text-xs bg-green-300 text-green-900 px-2 py-1 rounded-full font-bold">🌽 Harvest!</span><span class="text-xs bg-yellow-200 text-yellow-900 px-2 py-1 rounded-full font-bold">30 Levels</span></div></div>
   </div>
-
-  <div class="text-center text-amber-700">
-    <p class="text-sm">🚜 Click any card to start learning • 🔊 Tap speaker icons to hear words</p>
-  </div>
+  <div class="text-center text-amber-700"><p class="text-sm">🚜 Click any card to start learning • 🔊 Tap speaker icons to hear words</p></div>
 </div>
 
-<!-- ============ RULE 1 PAGE ============ -->
+<!-- ======== RULE 1 ======== -->
 <div id="page-rule1" class="page max-w-5xl mx-auto px-4 py-8">
   <div class="rule-card p-6 mb-6">
     <h2 class="fredoka text-3xl text-amber-900 mb-1">🔇 Rule 1: The Eight Rules of Silent "E"</h2>
     <p class="text-amber-700 font-semibold mb-4">Silent E has many important jobs in English spelling!</p>
-
-    <!-- Video -->
-    <div class="video-frame mb-6">
-      <iframe width="100%" height="100%" src="How Do You Use the Silent 'E'_ _ StoryBots_ Learn to Read _ Netflix Jr.mp4" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    <div class="video-wrapper mb-6" id="vid1" onclick="loadVideo('vid1','https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1','Silent E Rules Video')">
+      <div class="video-thumbnail"><div class="play-btn">▶</div><p>▶ Click to Watch: Silent E Rules</p></div>
     </div>
-
-    <!-- Sub-rule 1.1 -->
     <div class="mb-6">
       <div class="subrule-header mb-3">📌 1.1 – Prevents Words Ending in V or U</div>
-      <p class="text-amber-800 mb-3">English words don't end in the letters <strong>V</strong> or <strong>U</strong>. A silent E is added to the end to fix this!</p>
+      <p class="text-amber-800 mb-3">English words don't end in <strong>V</strong> or <strong>U</strong>. A silent E is added!</p>
       <div class="grid md:grid-cols-2 gap-4 mb-3">
-        <div class="exception-box">
-          <p class="font-bold text-amber-900 mb-2">🚫 No words end in V:</p>
-          <div class="flex flex-wrap gap-1">
-            <span class="example-tag">love <button class="tts-btn" onclick="speak('love')">🔊</button></span>
-            <span class="example-tag">live <button class="tts-btn" onclick="speak('live')">🔊</button></span>
-            <span class="example-tag">cave <button class="tts-btn" onclick="speak('cave')">🔊</button></span>
-            <span class="example-tag">save <button class="tts-btn" onclick="speak('save')">🔊</button></span>
-            <span class="example-tag">brave <button class="tts-btn" onclick="speak('brave')">🔊</button></span>
-          </div>
-        </div>
-        <div class="exception-box">
-          <p class="font-bold text-amber-900 mb-2">🚫 No words end in U:</p>
-          <div class="flex flex-wrap gap-1">
-            <span class="example-tag">blue <button class="tts-btn" onclick="speak('blue')">🔊</button></span>
-            <span class="example-tag">clue <button class="tts-btn" onclick="speak('clue')">🔊</button></span>
-            <span class="example-tag">due <button class="tts-btn" onclick="speak('due')">🔊</button></span>
-            <span class="example-tag">cue <button class="tts-btn" onclick="speak('cue')">🔊</button></span>
-          </div>
-        </div>
+        <div class="exception-box"><p class="font-bold text-amber-900 mb-2">🚫 No words end in V:</p><div class="flex flex-wrap gap-1"><span class="example-tag">love <button class="tts-btn" onclick="speak('love')">🔊</button></span><span class="example-tag">live <button class="tts-btn" onclick="speak('live')">🔊</button></span><span class="example-tag">cave <button class="tts-btn" onclick="speak('cave')">🔊</button></span><span class="example-tag">save <button class="tts-btn" onclick="speak('save')">🔊</button></span><span class="example-tag">brave <button class="tts-btn" onclick="speak('brave')">🔊</button></span></div></div>
+        <div class="exception-box"><p class="font-bold text-amber-900 mb-2">🚫 No words end in U:</p><div class="flex flex-wrap gap-1"><span class="example-tag">blue <button class="tts-btn" onclick="speak('blue')">🔊</button></span><span class="example-tag">clue <button class="tts-btn" onclick="speak('clue')">🔊</button></span><span class="example-tag">due <button class="tts-btn" onclick="speak('due')">🔊</button></span><span class="example-tag">cue <button class="tts-btn" onclick="speak('cue')">🔊</button></span></div></div>
       </div>
-      <div class="catchy-box">
-        <p class="fredoka text-red-800 text-lg">🎵 "No words end in V or U, add an E—that's what we do!"</p>
-        <button class="tts-btn mt-1" onclick="speak('No words end in V or U, add an E, that is what we do!')">🔊</button>
-      </div>
+      <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "No words end in V or U, add an E—that's what we do!"</p><button class="tts-btn mt-1" onclick="speak('No words end in V or U, add an E, that is what we do')">🔊</button></div>
     </div>
-
-    <!-- Sub-rule 1.2 -->
     <div class="mb-6">
       <div class="subrule-header mb-3">✨ 1.2 – Magic E: Makes the Vowel Say Its Name</div>
-      <p class="text-amber-800 mb-3">When a word follows the pattern <strong>Vowel – Consonant – E</strong>, the "E" makes the vowel say its long sound (its name)!</p>
-      <div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-4 mb-3 text-center">
-        <p class="fredoka text-2xl text-amber-900">Vowel → Consonant → <span class="text-red-600">E</span></p>
-        <p class="text-amber-700 mt-1">The vowel says its name! 🎤</p>
-      </div>
-      <div class="flex flex-wrap gap-2 mb-3">
-        <span class="example-tag">bake <button class="tts-btn" onclick="speak('bake')">🔊</button></span>
-        <span class="example-tag">cake <button class="tts-btn" onclick="speak('cake')">🔊</button></span>
-        <span class="example-tag">like <button class="tts-btn" onclick="speak('like')">🔊</button></span>
-        <span class="example-tag">bike <button class="tts-btn" onclick="speak('bike')">🔊</button></span>
-        <span class="example-tag">coke <button class="tts-btn" onclick="speak('coke')">🔊</button></span>
-      </div>
-      <div class="catchy-box">
-        <p class="fredoka text-red-800 text-lg">🎵 "Magic E at the end, makes the vowel say its name, my friend!"</p>
-        <button class="tts-btn mt-1" onclick="speak('Magic E at the end, makes the vowel say its name, my friend!')">🔊</button>
-      </div>
+      <p class="text-amber-800 mb-3">Pattern: <strong>Vowel – Consonant – E</strong> → vowel says its long sound!</p>
+      <div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-4 mb-3 text-center"><p class="fredoka text-2xl text-amber-900">Vowel → Consonant → <span class="text-red-600">E</span></p></div>
+      <div class="flex flex-wrap gap-2 mb-3"><span class="example-tag">bake <button class="tts-btn" onclick="speak('bake')">🔊</button></span><span class="example-tag">cake <button class="tts-btn" onclick="speak('cake')">🔊</button></span><span class="example-tag">like <button class="tts-btn" onclick="speak('like')">🔊</button></span><span class="example-tag">bike <button class="tts-btn" onclick="speak('bike')">🔊</button></span><span class="example-tag">coke <button class="tts-btn" onclick="speak('coke')">🔊</button></span></div>
+      <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "Magic E at the end, makes the vowel say its name, my friend!"</p><button class="tts-btn mt-1" onclick="speak('Magic E at the end, makes the vowel say its name, my friend')">🔊</button></div>
     </div>
-
-    <!-- Sub-rule 1.3 -->
     <div class="mb-6">
       <div class="subrule-header mb-3">🔤 1.3 – Silent E Keeps C and G Soft</div>
-      <p class="text-amber-800 mb-3">Silent E helps keep <strong>C</strong> sounding like /s/ and <strong>G</strong> sounding like /j/.</p>
+      <p class="text-amber-800 mb-3">Silent E keeps <strong>C</strong> = /s/ and <strong>G</strong> = /j/</p>
       <div class="grid md:grid-cols-2 gap-4 mb-3">
-        <div class="rule-card p-4">
-          <p class="font-bold text-amber-900 mb-2">C = /s/ sound:</p>
-          <span class="example-tag">face <button class="tts-btn" onclick="speak('face')">🔊</button></span>
-          <span class="example-tag">rice <button class="tts-btn" onclick="speak('rice')">🔊</button></span>
-          <div class="mt-2 text-sm text-amber-700">Without E: <strong>cap</strong> /k/ → <strong>cape</strong> /k…/ same but face has /s/!</div>
-        </div>
-        <div class="rule-card p-4">
-          <p class="font-bold text-amber-900 mb-2">G = /j/ sound:</p>
-          <span class="example-tag">age <button class="tts-btn" onclick="speak('age')">🔊</button></span>
-          <span class="example-tag">huge <button class="tts-btn" onclick="speak('huge')">🔊</button></span>
-          <div class="mt-2 text-sm text-amber-700">Without E: <strong>rag</strong> /g/ → <strong>rage</strong> /j/</div>
-        </div>
+        <div class="rule-card p-4"><p class="font-bold text-amber-900 mb-2">C = /s/ sound:</p><span class="example-tag">face <button class="tts-btn" onclick="speak('face')">🔊</button></span><span class="example-tag">rice <button class="tts-btn" onclick="speak('rice')">🔊</button></span></div>
+        <div class="rule-card p-4"><p class="font-bold text-amber-900 mb-2">G = /j/ sound:</p><span class="example-tag">age <button class="tts-btn" onclick="speak('age')">🔊</button></span><span class="example-tag">huge <button class="tts-btn" onclick="speak('huge')">🔊</button></span></div>
       </div>
-      <div class="tip-box mb-3">
-        <p class="font-bold text-green-800">🌱 Teaching Tip:</p>
-        <p class="text-green-700">This is super important for pronunciation! Remove the E and the sound changes.</p>
-      </div>
-      <div class="catchy-box">
-        <p class="fredoka text-red-800 text-lg">🎵 "C says /s/ and G says /j/, Silent E keeps them that way!"</p>
-        <button class="tts-btn mt-1" onclick="speak('C says s and G says j, Silent E keeps them that way!')">🔊</button>
-      </div>
+      <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "C says /s/ and G says /j/, Silent E keeps them that way!"</p><button class="tts-btn mt-1" onclick="speak('C says S and G says J, Silent E keeps them that way')">🔊</button></div>
     </div>
-
-    <!-- Sub-rule 1.4 -->
     <div class="mb-6">
       <div class="subrule-header mb-3">📖 1.4 – Shows Word Meaning (Homophones)</div>
-      <p class="text-amber-800 mb-3">Silent E helps us tell apart words that sound the same (homophones)!</p>
       <div class="grid grid-cols-3 gap-3 mb-3">
-        <div class="rule-card p-3 text-center">
-          <p class="font-bold text-amber-900">by <button class="tts-btn" onclick="speak('by')">🔊</button></p>
-          <p class="text-2xl">↕️</p>
-          <p class="font-bold text-amber-900">bye <button class="tts-btn" onclick="speak('bye')">🔊</button></p>
-        </div>
-        <div class="rule-card p-3 text-center">
-          <p class="font-bold text-amber-900">be <button class="tts-btn" onclick="speak('be')">🔊</button></p>
-          <p class="text-2xl">↕️</p>
-          <p class="font-bold text-amber-900">bee <button class="tts-btn" onclick="speak('bee')">🔊</button></p>
-        </div>
-        <div class="rule-card p-3 text-center">
-          <p class="font-bold text-amber-900">or <button class="tts-btn" onclick="speak('or')">🔊</button></p>
-          <p class="text-2xl">↕️</p>
-          <p class="font-bold text-amber-900">ore <button class="tts-btn" onclick="speak('ore')">🔊</button></p>
-        </div>
+        <div class="rule-card p-3 text-center"><p class="font-bold text-amber-900">by <button class="tts-btn" onclick="speak('by')">🔊</button></p><p class="text-2xl">↕️</p><p class="font-bold text-amber-900">bye <button class="tts-btn" onclick="speak('bye')">🔊</button></p></div>
+        <div class="rule-card p-3 text-center"><p class="font-bold text-amber-900">be <button class="tts-btn" onclick="speak('be')">🔊</button></p><p class="text-2xl">↕️</p><p class="font-bold text-amber-900">bee <button class="tts-btn" onclick="speak('bee')">🔊</button></p></div>
+        <div class="rule-card p-3 text-center"><p class="font-bold text-amber-900">or <button class="tts-btn" onclick="speak('or')">🔊</button></p><p class="text-2xl">↕️</p><p class="font-bold text-amber-900">ore <button class="tts-btn" onclick="speak('ore')">🔊</button></p></div>
       </div>
-      <div class="tip-box mb-3">
-        <p class="font-bold text-green-800">🌱 Teaching Tip:</p>
-        <p class="text-green-700">Great for vocabulary building! Use both words in sentences to show the difference.</p>
-      </div>
-      <div class="catchy-box">
-        <p class="fredoka text-red-800 text-lg">🎵 "Same sound, different way— Silent E helps all the way!"</p>
-        <button class="tts-btn mt-1" onclick="speak('Same sound, different way, Silent E helps all the way!')">🔊</button>
-      </div>
+      <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "Same sound, different way — Silent E helps all the way!"</p><button class="tts-btn mt-1" onclick="speak('Same sound, different way, Silent E helps all the way')">🔊</button></div>
     </div>
-
-    <!-- Sub-rule 1.5 -->
     <div class="mb-4">
-      <div class="subrule-header mb-3">⚡ 1.5 – Silent E Can Signal a Word Change (Special Rule)</div>
-      <p class="text-amber-800 mb-3">Sometimes adding a silent E changes <em>both</em> the sound <em>and</em> the meaning — often from a <strong>noun</strong> to a <strong>verb</strong>!</p>
+      <div class="subrule-header mb-3">⚡ 1.5 – Silent E Signals a Word Change</div>
       <div class="grid md:grid-cols-2 gap-4 mb-3">
-        <div class="rule-card p-4">
-          <p class="font-bold text-amber-900 mb-2">Noun → Verb examples:</p>
-          <div class="space-y-1 text-sm">
-            <div class="flex items-center gap-2">
-              <span class="example-tag">bath <button class="tts-btn" onclick="speak('bath')">🔊</button></span>
-              <span class="text-amber-600 font-bold">→</span>
-              <span class="example-tag">bathe <button class="tts-btn" onclick="speak('bathe')">🔊</button></span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="example-tag">breath <button class="tts-btn" onclick="speak('breath')">🔊</button></span>
-              <span class="text-amber-600 font-bold">→</span>
-              <span class="example-tag">breathe <button class="tts-btn" onclick="speak('breathe')">🔊</button></span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="example-tag">cloth <button class="tts-btn" onclick="speak('cloth')">🔊</button></span>
-              <span class="text-amber-600 font-bold">→</span>
-              <span class="example-tag">clothe <button class="tts-btn" onclick="speak('clothe')">🔊</button></span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="example-tag">teeth <button class="tts-btn" onclick="speak('teeth')">🔊</button></span>
-              <span class="text-amber-600 font-bold">→</span>
-              <span class="example-tag">teethe <button class="tts-btn" onclick="speak('teethe')">🔊</button></span>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div class="exception-box mb-2">
-            <p class="font-bold text-amber-900">🔊 Sound change:</p>
-            <p class="text-amber-800 text-sm">The "th" changes from soft /θ/ → voiced /ð/. Sometimes the vowel sound changes too!</p>
-          </div>
-          <div class="bg-red-50 border-2 border-red-300 rounded-lg p-3">
-            <p class="font-bold text-red-800 mb-1">⚠️ Exceptions (no pattern):</p>
-            <p class="text-red-700 text-sm">• both → (no "bothe")</p>
-            <p class="text-red-700 text-sm">• math → (no "mathe")</p>
-          </div>
-        </div>
+        <div class="rule-card p-4"><p class="font-bold text-amber-900 mb-2">Noun → Verb:</p><div class="space-y-1 text-sm"><div class="flex items-center gap-2"><span class="example-tag">bath <button class="tts-btn" onclick="speak('bath')">🔊</button></span><span>→</span><span class="example-tag">bathe <button class="tts-btn" onclick="speak('bathe')">🔊</button></span></div><div class="flex items-center gap-2"><span class="example-tag">breath <button class="tts-btn" onclick="speak('breath')">🔊</button></span><span>→</span><span class="example-tag">breathe <button class="tts-btn" onclick="speak('breathe')">🔊</button></span></div><div class="flex items-center gap-2"><span class="example-tag">cloth <button class="tts-btn" onclick="speak('cloth')">🔊</button></span><span>→</span><span class="example-tag">clothe <button class="tts-btn" onclick="speak('clothe')">🔊</button></span></div></div></div>
+        <div><div class="exception-box mb-2"><p class="font-bold text-amber-900">🔊 th changes:</p><p class="text-amber-800 text-sm">soft /θ/ → voiced /ð/</p></div><div class="bg-red-50 border-2 border-red-300 rounded-lg p-3"><p class="font-bold text-red-800 mb-1">⚠️ NOT always:</p><p class="text-red-700 text-sm">both → (no bothe) • math → (no mathe)</p></div></div>
       </div>
-      <div class="catchy-box">
-        <p class="fredoka text-red-800 text-lg">🎵 "Add an E, the sound may change—from soft to voiced, a little strange!"</p>
-        <button class="tts-btn mt-1" onclick="speak('Add an E, the sound may change, from soft to voiced, a little strange!')">🔊</button>
-      </div>
+      <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "Add an E, the sound may change — from soft to voiced, a little strange!"</p><button class="tts-btn mt-1" onclick="speak('Add an E, the sound may change, from soft to voiced, a little strange')">🔊</button></div>
     </div>
   </div>
-  <div class="text-center">
-    <button class="btn-green px-6 py-3 text-lg" onclick="showPage('rule2')">Next Rule: CVC Doubling ➡️</button>
-  </div>
+  <div class="text-center"><button class="btn-green px-6 py-3 text-lg" onclick="showPage('rule2')">Next Rule: CVC Doubling ➡️</button></div>
 </div>
 
-<!-- ============ RULE 2 PAGE ============ -->
+<!-- ======== RULE 2 ======== -->
 <div id="page-rule2" class="page max-w-5xl mx-auto px-4 py-8">
   <div class="rule-card p-6 mb-6">
     <h2 class="fredoka text-3xl text-amber-900 mb-1">📝 Rule 2: CVC Doubling Rule</h2>
     <p class="text-amber-700 font-semibold mb-4">Double the last consonant before adding -ing or -ed!</p>
-    <div class="video-frame mb-6">
-      <iframe width="100%" height="100%" src="Doubling the Final Consonant _ Spelling Rules _ EasyTeaching.mp4" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    <div class="video-wrapper mb-6" id="vid2" onclick="loadVideo('vid2','https://www.youtube-nocookie.com/embed/videoseries?autoplay=1','CVC Doubling Rule Video')">
+      <div class="video-thumbnail"><div class="play-btn">▶</div><p>▶ Click to Watch: CVC Doubling Rule</p></div>
     </div>
     <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5">
       <p class="fredoka text-2xl text-amber-900 mb-3 text-center">When a word has:</p>
       <div class="grid grid-cols-3 gap-3 text-center mb-4">
-        <div class="wood-plank rounded-lg p-3 text-straw">
-          <p class="fredoka text-3xl" style="color:#f5e6c8">1️⃣</p>
-          <p class="font-bold" style="color:#f5e6c8">1 Syllable</p>
-        </div>
-        <div class="wood-plank rounded-lg p-3 text-straw">
-          <p class="fredoka text-3xl" style="color:#f5e6c8">🔤</p>
-          <p class="font-bold" style="color:#f5e6c8">C–V–C Pattern</p>
-        </div>
-        <div class="wood-plank rounded-lg p-3 text-straw">
-          <p class="fredoka text-3xl" style="color:#f5e6c8">➕</p>
-          <p class="font-bold" style="color:#f5e6c8">Adding -ing or -ed</p>
-        </div>
+        <div class="wood-plank rounded-lg p-3"><p class="fredoka text-3xl" style="color:#f5e6c8">1️⃣</p><p class="font-bold" style="color:#f5e6c8">1 Syllable</p></div>
+        <div class="wood-plank rounded-lg p-3"><p class="fredoka text-3xl" style="color:#f5e6c8">🔤</p><p class="font-bold" style="color:#f5e6c8">C–V–C Pattern</p></div>
+        <div class="wood-plank rounded-lg p-3"><p class="fredoka text-3xl" style="color:#f5e6c8">➕</p><p class="font-bold" style="color:#f5e6c8">Adding -ing or -ed</p></div>
       </div>
       <p class="text-center fredoka text-xl text-red-700">👉 Double the last consonant!</p>
     </div>
     <div class="grid md:grid-cols-2 gap-4 mb-5">
-      <div class="rule-card p-4">
-        <p class="font-bold text-amber-900 mb-3">Examples with -ing:</p>
-        <div class="space-y-2">
-          <div class="flex items-center gap-3">
-            <span class="example-tag">run <button class="tts-btn" onclick="speak('run')">🔊</button></span>
-            <span class="fredoka text-amber-700">→</span>
-            <span class="example-tag">runn<span class="text-red-600 font-black">n</span>ing <button class="tts-btn" onclick="speak('running')">🔊</button></span>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="example-tag">sit <button class="tts-btn" onclick="speak('sit')">🔊</button></span>
-            <span class="fredoka text-amber-700">→</span>
-            <span class="example-tag">sit<span class="text-red-600 font-black">t</span>ing <button class="tts-btn" onclick="speak('sitting')">🔊</button></span>
-          </div>
-        </div>
-      </div>
-      <div class="rule-card p-4">
-        <p class="font-bold text-amber-900 mb-3">Examples with -ed:</p>
-        <div class="space-y-2">
-          <div class="flex items-center gap-3">
-            <span class="example-tag">hop <button class="tts-btn" onclick="speak('hop')">🔊</button></span>
-            <span class="fredoka text-amber-700">→</span>
-            <span class="example-tag">hop<span class="text-red-600 font-black">p</span>ed <button class="tts-btn" onclick="speak('hopped')">🔊</button></span>
-          </div>
-        </div>
-      </div>
+      <div class="rule-card p-4"><p class="font-bold text-amber-900 mb-3">Examples with -ing:</p><div class="space-y-2"><div class="flex items-center gap-3"><span class="example-tag">run <button class="tts-btn" onclick="speak('run')">🔊</button></span><span class="fredoka text-amber-700">→</span><span class="example-tag">runn<span class="text-red-600 font-black">n</span>ing <button class="tts-btn" onclick="speak('running')">🔊</button></span></div><div class="flex items-center gap-3"><span class="example-tag">sit <button class="tts-btn" onclick="speak('sit')">🔊</button></span><span class="fredoka text-amber-700">→</span><span class="example-tag">sit<span class="text-red-600 font-black">t</span>ing <button class="tts-btn" onclick="speak('sitting')">🔊</button></span></div></div></div>
+      <div class="rule-card p-4"><p class="font-bold text-amber-900 mb-3">Examples with -ed:</p><div class="flex items-center gap-3"><span class="example-tag">hop <button class="tts-btn" onclick="speak('hop')">🔊</button></span><span class="fredoka text-amber-700">→</span><span class="example-tag">hop<span class="text-red-600 font-black">p</span>ed <button class="tts-btn" onclick="speak('hopped')">🔊</button></span></div></div>
     </div>
-    <div class="catchy-box">
-      <p class="fredoka text-red-800 text-lg">🎵 "One syllable, C-V-C—double the last letter, can't you see!"</p>
-      <button class="tts-btn mt-1" onclick="speak('One syllable, C V C, double the last letter, can not you see!')">🔊</button>
-    </div>
+    <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "One syllable, C-V-C — double the last letter, can't you see!"</p><button class="tts-btn mt-1" onclick="speak('One syllable, C V C, double the last letter, cannot you see')">🔊</button></div>
   </div>
-  <div class="flex gap-3 justify-center">
-    <button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule1')">⬅️ Rule 1</button>
-    <button class="btn-green px-5 py-2 text-base" onclick="showPage('rule3')">Rule 3 ➡️</button>
-  </div>
+  <div class="flex gap-3 justify-center"><button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule1')">⬅️ Rule 1</button><button class="btn-green px-5 py-2 text-base" onclick="showPage('rule3')">Rule 3 ➡️</button></div>
 </div>
 
-<!-- ============ RULE 3 PAGE ============ -->
+<!-- ======== RULE 3 ======== -->
 <div id="page-rule3" class="page max-w-5xl mx-auto px-4 py-8">
   <div class="rule-card p-6 mb-6">
     <h2 class="fredoka text-3xl text-amber-900 mb-1">✂️ Rule 3: Drop the "E" Rule</h2>
     <p class="text-amber-700 font-semibold mb-4">If a word ends in silent E, drop it before adding -ing!</p>
-    <div class="video-frame mb-6">
-      <iframe width="100%" height="100%" src="Drop the E Spelling Rule _ Adding Vowel Suffixes _ UFLI Lesson 109 _ Grade 1, Grade 2 Spelling Rules.mp4" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    <div class="video-wrapper mb-6" id="vid3" onclick="loadVideo('vid3','https://www.youtube-nocookie.com/embed/videoseries?autoplay=1','Drop the E Rule Video')">
+      <div class="video-thumbnail"><div class="play-btn">▶</div><p>▶ Click to Watch: Drop the E Rule</p></div>
     </div>
-    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center">
-      <p class="fredoka text-2xl text-amber-900">Word ends in silent E?</p>
-      <p class="text-4xl my-2">✂️ + ing</p>
-      <p class="fredoka text-xl text-red-700">Drop the E, then add -ing!</p>
-    </div>
+    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center"><p class="fredoka text-2xl text-amber-900">Word ends in silent E?</p><p class="text-4xl my-2">✂️ + ing</p><p class="fredoka text-xl text-red-700">Drop the E, then add -ing!</p></div>
     <div class="grid md:grid-cols-3 gap-4 mb-5">
-      <div class="rule-card p-4 text-center">
-        <span class="example-tag text-lg">make <button class="tts-btn" onclick="speak('make')">🔊</button></span>
-        <p class="text-2xl my-2">⬇️</p>
-        <p class="text-sm text-amber-700">drop the E</p>
-        <span class="example-tag text-lg mt-1">making <button class="tts-btn" onclick="speak('making')">🔊</button></span>
-      </div>
-      <div class="rule-card p-4 text-center">
-        <span class="example-tag text-lg">write <button class="tts-btn" onclick="speak('write')">🔊</button></span>
-        <p class="text-2xl my-2">⬇️</p>
-        <p class="text-sm text-amber-700">drop the E</p>
-        <span class="example-tag text-lg mt-1">writing <button class="tts-btn" onclick="speak('writing')">🔊</button></span>
-      </div>
-      <div class="rule-card p-4 text-center">
-        <span class="example-tag text-lg">dance <button class="tts-btn" onclick="speak('dance')">🔊</button></span>
-        <p class="text-2xl my-2">⬇️</p>
-        <p class="text-sm text-amber-700">drop the E</p>
-        <span class="example-tag text-lg mt-1">dancing <button class="tts-btn" onclick="speak('dancing')">🔊</button></span>
-      </div>
+      <div class="rule-card p-4 text-center"><span class="example-tag text-lg">make <button class="tts-btn" onclick="speak('make')">🔊</button></span><p class="text-2xl my-2">⬇️</p><span class="example-tag text-lg">making <button class="tts-btn" onclick="speak('making')">🔊</button></span></div>
+      <div class="rule-card p-4 text-center"><span class="example-tag text-lg">write <button class="tts-btn" onclick="speak('write')">🔊</button></span><p class="text-2xl my-2">⬇️</p><span class="example-tag text-lg">writing <button class="tts-btn" onclick="speak('writing')">🔊</button></span></div>
+      <div class="rule-card p-4 text-center"><span class="example-tag text-lg">dance <button class="tts-btn" onclick="speak('dance')">🔊</button></span><p class="text-2xl my-2">⬇️</p><span class="example-tag text-lg">dancing <button class="tts-btn" onclick="speak('dancing')">🔊</button></span></div>
     </div>
-    <div class="bg-red-50 border-2 border-red-300 rounded-xl p-4 mb-4">
-      <p class="font-bold text-red-800 mb-2">⚠️ Exception — Keep the E:</p>
-      <div class="flex items-center gap-3">
-        <span class="example-tag">see <button class="tts-btn" onclick="speak('see')">🔊</button></span>
-        <span class="fredoka text-amber-700">→</span>
-        <span class="example-tag">seeing <button class="tts-btn" onclick="speak('seeing')">🔊</button></span>
-        <span class="text-red-700 text-sm font-bold">(keep the E!)</span>
-      </div>
-    </div>
-    <div class="catchy-box">
-      <p class="fredoka text-red-800 text-lg">🎵 "Silent E, goodbye for now—add -ing, drop it out!"</p>
-      <button class="tts-btn mt-1" onclick="speak('Silent E, goodbye for now, add ing, drop it out!')">🔊</button>
-    </div>
+    <div class="bg-red-50 border-2 border-red-300 rounded-xl p-4 mb-4"><p class="font-bold text-red-800 mb-2">⚠️ Exception — Keep the E:</p><div class="flex items-center gap-3"><span class="example-tag">see <button class="tts-btn" onclick="speak('see')">🔊</button></span><span class="fredoka text-amber-700">→</span><span class="example-tag">seeing <button class="tts-btn" onclick="speak('seeing')">🔊</button></span><span class="text-red-700 text-sm font-bold">(keep the E!)</span></div></div>
+    <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "Silent E, goodbye for now — add -ing, drop it out!"</p><button class="tts-btn mt-1" onclick="speak('Silent E, goodbye for now, add ing, drop it out')">🔊</button></div>
   </div>
-  <div class="flex gap-3 justify-center">
-    <button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule2')">⬅️ Rule 2</button>
-    <button class="btn-green px-5 py-2 text-base" onclick="showPage('rule4')">Rule 4 ➡️</button>
-  </div>
+  <div class="flex gap-3 justify-center"><button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule2')">⬅️ Rule 2</button><button class="btn-green px-5 py-2 text-base" onclick="showPage('rule4')">Rule 4 ➡️</button></div>
 </div>
 
-<!-- ============ RULE 4 PAGE ============ -->
+<!-- ======== RULE 4 ======== -->
 <div id="page-rule4" class="page max-w-5xl mx-auto px-4 py-8">
   <div class="rule-card p-6 mb-6">
     <h2 class="fredoka text-3xl text-amber-900 mb-1">🅸 Rule 4: I Before E Rule</h2>
-    <p class="text-amber-700 font-semibold mb-4">The classic spelling rule—with a famous exception!</p>
-    <div class="video-frame mb-6">
-      <iframe width="100%" height="100%" src="I BEFORE E EXCEPT AFTER C 🦸_♀️ SPELLING AND GRAMMAR for Kids 📝 Superlexia ⭐ Episode 9.mp4" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    <p class="text-amber-700 font-semibold mb-4">The classic spelling rule — with a famous exception!</p>
+    <div class="video-wrapper mb-6" id="vid4" onclick="loadVideo('vid4','https://www.youtube-nocookie.com/embed/videoseries?autoplay=1','I Before E Rule Video')">
+      <div class="video-thumbnail"><div class="play-btn">▶</div><p>▶ Click to Watch: I Before E Rule</p></div>
     </div>
-    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center">
-      <p class="fredoka text-3xl text-amber-900 mb-2">I before E,</p>
-      <p class="fredoka text-2xl text-red-700 mb-2">except after C</p>
-      <p class="text-amber-700">...but sometimes it's different, you'll see! 🙃</p>
-    </div>
+    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center"><p class="fredoka text-3xl text-amber-900 mb-2">I before E,</p><p class="fredoka text-2xl text-red-700 mb-2">except after C</p><p class="text-amber-700">...but sometimes it's different, you'll see! 🙃</p></div>
     <div class="grid md:grid-cols-2 gap-5 mb-5">
-      <div class="rule-card p-4">
-        <p class="font-bold text-amber-900 mb-3">✅ Follow the Rule:</p>
-        <div class="flex flex-wrap gap-2">
-          <span class="example-tag">believe <button class="tts-btn" onclick="speak('believe')">🔊</button></span>
-          <span class="example-tag">receive <button class="tts-btn" onclick="speak('receive')">🔊</button></span>
-          <span class="example-tag">field <button class="tts-btn" onclick="speak('field')">🔊</button></span>
-          <span class="example-tag">piece <button class="tts-btn" onclick="speak('piece')">🔊</button></span>
-        </div>
-      </div>
-      <div class="bg-red-50 border-2 border-red-300 rounded-xl p-4">
-        <p class="font-bold text-red-800 mb-3">⚠️ Exceptions (many exist!):</p>
-        <div class="flex flex-wrap gap-2">
-          <span class="example-tag">weird <button class="tts-btn" onclick="speak('weird')">🔊</button></span>
-          <span class="example-tag">science <button class="tts-btn" onclick="speak('science')">🔊</button></span>
-          <span class="example-tag">their <button class="tts-btn" onclick="speak('their')">🔊</button></span>
-        </div>
-      </div>
+      <div class="rule-card p-4"><p class="font-bold text-amber-900 mb-3">✅ Follow the Rule:</p><div class="flex flex-wrap gap-2"><span class="example-tag">believe <button class="tts-btn" onclick="speak('believe')">🔊</button></span><span class="example-tag">receive <button class="tts-btn" onclick="speak('receive')">🔊</button></span><span class="example-tag">field <button class="tts-btn" onclick="speak('field')">🔊</button></span><span class="example-tag">piece <button class="tts-btn" onclick="speak('piece')">🔊</button></span></div></div>
+      <div class="bg-red-50 border-2 border-red-300 rounded-xl p-4"><p class="font-bold text-red-800 mb-3">⚠️ Exceptions:</p><div class="flex flex-wrap gap-2"><span class="example-tag">weird <button class="tts-btn" onclick="speak('weird')">🔊</button></span><span class="example-tag">science <button class="tts-btn" onclick="speak('science')">🔊</button></span><span class="example-tag">their <button class="tts-btn" onclick="speak('their')">🔊</button></span></div></div>
     </div>
-    <div class="tip-box mb-4">
-      <p class="font-bold text-green-800">🌱 Teaching Note:</p>
-      <p class="text-green-700">This rule has MANY exceptions! It's helpful, but not always right. Teach it as a starting point, not a guarantee!</p>
-    </div>
-    <div class="catchy-box">
-      <p class="fredoka text-red-800 text-lg">🎵 "I before E, except after C—but sometimes it's different, you'll see!"</p>
-      <button class="tts-btn mt-1" onclick="speak('I before E, except after C, but sometimes it is different, you will see!')">🔊</button>
-    </div>
+    <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "I before E, except after C — but sometimes it's different, you'll see!"</p><button class="tts-btn mt-1" onclick="speak('I before E, except after C, but sometimes it is different, you will see')">🔊</button></div>
   </div>
-  <div class="flex gap-3 justify-center">
-    <button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule3')">⬅️ Rule 3</button>
-    <button class="btn-green px-5 py-2 text-base" onclick="showPage('rule5')">Rule 5 ➡️</button>
-  </div>
+  <div class="flex gap-3 justify-center"><button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule3')">⬅️ Rule 3</button><button class="btn-green px-5 py-2 text-base" onclick="showPage('rule5')">Rule 5 ➡️</button></div>
 </div>
 
-<!-- ============ RULE 5 PAGE ============ -->
+<!-- ======== RULE 5 ======== -->
 <div id="page-rule5" class="page max-w-5xl mx-auto px-4 py-8">
   <div class="rule-card p-6 mb-6">
     <h2 class="fredoka text-3xl text-amber-900 mb-1">👑 Rule 5: The "QU" Rule</h2>
     <p class="text-amber-700 font-semibold mb-4">Q and U always go together — they're best friends!</p>
-    <div class="video-frame mb-6">
-      <iframe width="100%" height="100%" src="QU Rules ✏️ GRAMMAR and SPELLING for Kids 🔡 Superlexia ⭐ Episode 16.mp4" frameborder="0" allowfullscreen style="min-height:220px"></iframe>
+    <div class="video-wrapper mb-6" id="vid5" onclick="loadVideo('vid5','https://www.youtube-nocookie.com/embed/videoseries?autoplay=1','QU Rule Video')">
+      <div class="video-thumbnail"><div class="play-btn">▶</div><p>▶ Click to Watch: QU Rule</p></div>
     </div>
-    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center">
-      <p class="text-7xl mb-3" style="animation: swing 2s infinite ease-in-out; display:inline-block">Q 🤝 U</p>
-      <p class="fredoka text-2xl text-amber-900">Q is almost always followed by U!</p>
-    </div>
-    <div class="mb-5">
-      <p class="font-bold text-amber-900 mb-3 text-lg">Examples:</p>
-      <div class="flex flex-wrap gap-3">
-        <span class="example-tag text-lg">queen <button class="tts-btn" onclick="speak('queen')">🔊</button></span>
-        <span class="example-tag text-lg">quick <button class="tts-btn" onclick="speak('quick')">🔊</button></span>
-        <span class="example-tag text-lg">question <button class="tts-btn" onclick="speak('question')">🔊</button></span>
-        <span class="example-tag text-lg">quiet <button class="tts-btn" onclick="speak('quiet')">🔊</button></span>
-        <span class="example-tag text-lg">quilt <button class="tts-btn" onclick="speak('quilt')">🔊</button></span>
-        <span class="example-tag text-lg">squeeze <button class="tts-btn" onclick="speak('squeeze')">🔊</button></span>
-      </div>
-    </div>
-    <div class="tip-box mb-4">
-      <p class="font-bold text-green-800">🌱 Teaching Tip:</p>
-      <p class="text-green-700">Tell students: "If you see Q, look for its partner U right after it! They're always together in English words."</p>
-    </div>
-    <div class="catchy-box">
-      <p class="fredoka text-red-800 text-lg">🎵 "Q and U go hand in hand— together they always stand!"</p>
-      <button class="tts-btn mt-1" onclick="speak('Q and U go hand in hand, together they always stand!')">🔊</button>
-    </div>
+    <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-5 mb-5 text-center"><p class="text-7xl mb-3" style="animation:swing 2s infinite ease-in-out;display:inline-block">Q 🤝 U</p><p class="fredoka text-2xl text-amber-900">Q is almost always followed by U!</p></div>
+    <div class="flex flex-wrap gap-3 mb-4"><span class="example-tag text-lg">queen <button class="tts-btn" onclick="speak('queen')">🔊</button></span><span class="example-tag text-lg">quick <button class="tts-btn" onclick="speak('quick')">🔊</button></span><span class="example-tag text-lg">question <button class="tts-btn" onclick="speak('question')">🔊</button></span><span class="example-tag text-lg">quiet <button class="tts-btn" onclick="speak('quiet')">🔊</button></span><span class="example-tag text-lg">quilt <button class="tts-btn" onclick="speak('quilt')">🔊</button></span><span class="example-tag text-lg">squeeze <button class="tts-btn" onclick="speak('squeeze')">🔊</button></span></div>
+    <div class="catchy-box"><p class="fredoka text-red-800 text-lg">🎵 "Q and U go hand in hand — together they always stand!"</p><button class="tts-btn mt-1" onclick="speak('Q and U go hand in hand, together they always stand')">🔊</button></div>
   </div>
-  <div class="flex gap-3 justify-center flex-wrap">
-    <button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule4')">⬅️ Rule 4</button>
-    <button class="btn-barn px-5 py-2 text-base" onclick="startGame()">🎮 Play Harvest Game!</button>
+  <div class="flex gap-3 justify-center flex-wrap"><button class="btn-wood px-5 py-2 text-base" onclick="showPage('rule4')">⬅️ Rule 4</button><button class="btn-barn px-5 py-2 text-base" onclick="showPage('gameselect')">🎮 Play Games!</button></div>
+</div>
+
+<!-- ======== GAME SELECT ======== -->
+<div id="page-gameselect" class="page max-w-4xl mx-auto px-4 py-8">
+  <div class="text-center mb-6"><h2 class="fredoka text-3xl text-amber-900 mb-2">🎮 Choose Your Game!</h2><p class="text-amber-700 font-semibold">3 game modes • 30 levels each</p></div>
+  <div class="grid md:grid-cols-3 gap-5 mb-8">
+    <div class="menu-card p-6 text-center" onclick="startGame('harvest')">
+      <div class="text-5xl mb-3">🌽</div>
+      <h3 class="fredoka text-2xl text-amber-900 mb-2">Harvest Quiz</h3>
+      <p class="text-amber-700 mb-3">Pick the correct spelling from 2 seed bags!</p>
+      <div class="flex flex-wrap gap-1 justify-center"><span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-bold">Multiple Choice</span><span class="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold">30 Levels</span></div>
+    </div>
+    <div class="menu-card p-6 text-center" onclick="startGame('fillblank')">
+      <div class="text-5xl mb-3">✍️</div>
+      <h3 class="fredoka text-2xl text-amber-900 mb-2">Fill the Barn</h3>
+      <p class="text-amber-700 mb-3">Type the missing word to fill the barn!</p>
+      <div class="flex flex-wrap gap-1 justify-center"><span class="text-xs bg-blue-200 text-blue-800 px-2 py-1 rounded-full font-bold">Fill-in-Blank</span><span class="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold">30 Levels</span></div>
+    </div>
+    <div class="menu-card p-6 text-center" onclick="startGame('wordsort')">
+      <div class="text-5xl mb-3">🌾</div>
+      <h3 class="fredoka text-2xl text-amber-900 mb-2">Word Sort</h3>
+      <p class="text-amber-700 mb-3">Sort words into the correct rule buckets!</p>
+      <div class="flex flex-wrap gap-1 justify-center"><span class="text-xs bg-purple-200 text-purple-800 px-2 py-1 rounded-full font-bold">Sorting Game</span><span class="text-xs bg-amber-200 text-amber-800 px-2 py-1 rounded-full font-bold">30 Levels</span></div>
+    </div>
   </div>
 </div>
 
-<!-- ============ GAME PAGE ============ -->
-<div id="page-game" class="page max-w-5xl mx-auto px-4 py-8">
+<!-- ======== HARVEST GAME ======== -->
+<div id="page-harvest" class="page max-w-4xl mx-auto px-4 py-8">
   <div class="rule-card p-5 mb-4">
-    <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
-      <h2 class="fredoka text-2xl md:text-3xl text-amber-900">🌽 Harvest Minigame</h2>
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div class="flex items-center gap-2"><h2 class="fredoka text-2xl text-amber-900">🌽 Harvest Quiz</h2><span class="level-badge" id="hLevelBadge">Lv.1</span></div>
       <div class="flex items-center gap-3">
-        <div class="wood-plank rounded-lg px-4 py-2">
-          <span class="fredoka text-straw text-xl" id="scoreDisplay">Score: 0 🌾</span>
-        </div>
-        <div class="wood-plank rounded-lg px-3 py-2">
-          <span class="text-straw font-bold" id="qNumDisplay">Q 1/10</span>
-        </div>
+        <div class="wood-plank rounded-lg px-3 py-1"><span class="fredoka text-sm" style="color:#f5e6c8" id="hStreakDisplay">🔥 0</span></div>
+        <div class="wood-plank rounded-lg px-3 py-1"><span class="fredoka text-sm" style="color:#f5e6c8" id="hScoreDisplay">Score: 0</span></div>
+        <div class="wood-plank rounded-lg px-3 py-1"><span class="text-sm font-bold" style="color:#f5e6c8" id="hQNum">Q 1/5</span></div>
       </div>
     </div>
-    <!-- Progress bar -->
-    <div class="progress-bar-outer mb-4">
-      <div class="progress-bar-inner" id="gameProgress" style="width:0%"></div>
+    <div class="progress-bar-outer mb-4"><div class="progress-bar-inner" id="hProgress" style="width:0%"></div></div>
+    <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4" id="hFarmGrid">
+      <div class="farm-cell" id="hcell0"></div><div class="farm-cell" id="hcell1"></div><div class="farm-cell" id="hcell2"></div><div class="farm-cell" id="hcell3"></div><div class="farm-cell" id="hcell4"></div><div class="farm-cell" id="hcell5"></div>
     </div>
-    <!-- Farm grid -->
-    <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-5" id="farmGrid">
-      <div class="farm-cell" id="cell0"></div>
-      <div class="farm-cell" id="cell1"></div>
-      <div class="farm-cell" id="cell2"></div>
-      <div class="farm-cell" id="cell3"></div>
-      <div class="farm-cell" id="cell4"></div>
-      <div class="farm-cell" id="cell5"></div>
+    <div class="wood-plank rounded-xl p-4 mb-4 text-center">
+      <p class="text-sm mb-1 opacity-70" style="color:#f5e6c8">📋 Choose the correct spelling:</p>
+      <p class="fredoka text-xl md:text-2xl" id="hQuestion" style="color:#f5e6c8">Loading...</p>
+      <button class="tts-btn mt-1" onclick="speakEl('hQuestion')">🔊</button>
     </div>
-    <!-- Question sign -->
-    <div class="wood-plank rounded-xl p-5 mb-5 text-center" id="questionArea">
-      <p class="text-straw text-sm mb-1 opacity-80">📋 Choose the correct spelling:</p>
-      <p class="fredoka text-2xl md:text-3xl text-white drop-shadow" id="questionText" style="color:#f5e6c8">Loading...</p>
-      <button class="tts-btn mt-2" id="questionTTSBtn" onclick="speakQuestion()">🔊</button>
+    <div class="grid grid-cols-2 gap-4 mb-3">
+      <div class="seed-bag p-4 text-center" id="hBagA"><div class="text-2xl mb-1">🌱</div><p class="fredoka text-lg" id="hAnsA" style="color:#f5e6c8">A</p></div>
+      <div class="seed-bag p-4 text-center" id="hBagB"><div class="text-2xl mb-1">🌱</div><p class="fredoka text-lg" id="hAnsB" style="color:#f5e6c8">B</p></div>
     </div>
-    <!-- Answer seed bags -->
-    <div class="grid grid-cols-2 gap-4" id="answersArea">
-      <div class="seed-bag p-4 text-center" id="bagA" onclick="handleAnswer(0)">
-        <div class="text-3xl mb-1">🌱</div>
-        <p class="fredoka text-xl text-straw" id="ansA" style="color:#f5e6c8">A</p>
-      </div>
-      <div class="seed-bag p-4 text-center" id="bagB" onclick="handleAnswer(1)">
-        <div class="text-3xl mb-1">🌱</div>
-        <p class="fredoka text-xl text-straw" id="ansB" style="color:#f5e6c8">B</p>
-      </div>
-    </div>
-    <!-- Feedback message -->
-    <div id="feedbackMsg" class="text-center mt-4 text-2xl font-bold fredoka hidden"></div>
+    <div id="hFeedback" class="text-center text-xl font-bold fredoka hidden mt-2"></div>
   </div>
 </div>
 
-<!-- ============ SCORE PAGE ============ -->
+<!-- ======== FILL BLANK GAME ======== -->
+<div id="page-fillblank" class="page max-w-4xl mx-auto px-4 py-8">
+  <div class="rule-card p-5 mb-4">
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div class="flex items-center gap-2"><h2 class="fredoka text-2xl text-amber-900">✍️ Fill the Barn</h2><span class="level-badge" id="fLevelBadge">Lv.1</span></div>
+      <div class="flex items-center gap-3">
+        <div class="wood-plank rounded-lg px-3 py-1"><span class="fredoka text-sm" style="color:#f5e6c8" id="fStreakDisplay">🔥 0</span></div>
+        <div class="wood-plank rounded-lg px-3 py-1"><span class="fredoka text-sm" style="color:#f5e6c8" id="fScoreDisplay">Score: 0</span></div>
+        <div class="wood-plank rounded-lg px-3 py-1"><span class="text-sm font-bold" style="color:#f5e6c8" id="fQNum">Q 1/5</span></div>
+      </div>
+    </div>
+    <div class="progress-bar-outer mb-4"><div class="progress-bar-inner" id="fProgress" style="width:0%"></div></div>
+    <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4" id="fFarmGrid">
+      <div class="farm-cell" id="fcell0"></div><div class="farm-cell" id="fcell1"></div><div class="farm-cell" id="fcell2"></div><div class="farm-cell" id="fcell3"></div><div class="farm-cell" id="fcell4"></div><div class="farm-cell" id="fcell5"></div>
+    </div>
+    <div class="wood-plank rounded-xl p-4 mb-4 text-center">
+      <p class="text-sm mb-1 opacity-70" style="color:#f5e6c8">🌽 Type the correct word:</p>
+      <p class="fredoka text-xl md:text-2xl mb-2" id="fQuestion" style="color:#f5e6c8">Loading...</p>
+      <button class="tts-btn" onclick="speakEl('fQuestion')">🔊</button>
+    </div>
+    <div class="text-center mb-3">
+      <p class="text-amber-700 text-sm mb-2" id="fHintText"></p>
+      <input type="text" id="fInput" class="fill-input" placeholder="Type your answer here..." autocomplete="off" autocorrect="off" spellcheck="false" onkeydown="if(event.key==='Enter')checkFill()">
+      <div class="mt-3 flex gap-2 justify-center flex-wrap">
+        <button class="btn-green px-5 py-2 text-base" onclick="checkFill()">✅ Check!</button>
+        <button class="btn-wood px-4 py-2 text-sm" onclick="showFillHint()">💡 Hint</button>
+      </div>
+    </div>
+    <div id="fFeedback" class="text-center text-xl font-bold fredoka hidden mt-2"></div>
+  </div>
+</div>
+
+<!-- ======== WORD SORT GAME ======== -->
+<div id="page-wordsort" class="page max-w-4xl mx-auto px-4 py-8">
+  <div class="rule-card p-5 mb-4">
+    <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+      <div class="flex items-center gap-2"><h2 class="fredoka text-2xl text-amber-900">🌾 Word Sort</h2><span class="level-badge" id="sLevelBadge">Lv.1</span></div>
+      <div class="flex items-center gap-3">
+        <div class="wood-plank rounded-lg px-3 py-1"><span class="fredoka text-sm" style="color:#f5e6c8" id="sScoreDisplay">Score: 0</span></div>
+        <div class="wood-plank rounded-lg px-3 py-1"><span class="text-sm font-bold" style="color:#f5e6c8" id="sQNum">Round 1/5</span></div>
+      </div>
+    </div>
+    <div class="progress-bar-outer mb-4"><div class="progress-bar-inner" id="sProgress" style="width:0%"></div></div>
+    <div class="wood-plank rounded-xl p-4 mb-4 text-center"><p class="fredoka text-lg" id="sSortInstruction" style="color:#f5e6c8">Sort these words into the correct buckets!</p></div>
+    <div id="sWordBank" class="flex flex-wrap gap-2 justify-center mb-5 p-3 bg-amber-50 border-2 border-amber-300 rounded-xl min-h-14"></div>
+    <div id="sBuckets" class="grid gap-4"></div>
+    <div class="mt-3 flex gap-2 justify-center"><button class="btn-green px-5 py-2 text-base" onclick="checkSort()">✅ Check Sort!</button></div>
+    <div id="sFeedback" class="text-center text-xl font-bold fredoka hidden mt-3"></div>
+  </div>
+</div>
+
+<!-- ======== SCORE ======== -->
 <div id="page-score" class="page max-w-lg mx-auto px-4 py-12 text-center">
   <div class="rule-card p-8">
     <div class="text-6xl mb-4" id="scoreEmoji">🌽</div>
     <h2 class="fredoka text-4xl text-amber-900 mb-2">Harvest Complete!</h2>
-    <p class="text-amber-700 font-semibold mb-5">Here's how your farm did:</p>
-    <div class="wood-plank rounded-2xl p-6 mb-5">
-      <p class="fredoka text-6xl" style="color:#f5e6c8" id="finalScore">0/10</p>
-      <p class="text-straw font-bold mt-1" id="finalScoreLabel" style="color:#f5e6c8">Points Harvested!</p>
-    </div>
-    <div class="flex justify-center gap-1 mb-6" id="starRow">
-      <span class="star" id="star1">⭐</span>
-      <span class="star" id="star2">⭐</span>
-      <span class="star" id="star3">⭐</span>
-    </div>
-    <p class="text-lg text-amber-800 mb-6 font-semibold" id="scoreMessage">Keep practicing!</p>
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <button class="btn-barn px-6 py-3 text-lg" onclick="startGame()">🔄 Play Again</button>
-      <button class="btn-wood px-6 py-3 text-lg" onclick="showPage('home')">🏠 Back to Farm</button>
+    <p class="text-amber-700 font-semibold mb-4" id="scoreGameMode">Harvest Quiz</p>
+    <div class="wood-plank rounded-2xl p-6 mb-4"><p class="fredoka text-5xl" style="color:#f5e6c8" id="finalScore">0/5</p><p class="text-sm font-bold mt-1" style="color:#f5e6c8" id="finalScoreLabel">Points Harvested!</p></div>
+    <div class="bg-amber-50 border-2 border-amber-200 rounded-xl p-3 mb-4"><p class="font-bold text-amber-800">Level <span id="currentLevelLabel">1</span> / 30</p><div class="progress-bar-outer mt-2"><div class="progress-bar-inner" id="levelProgress" style="width:0%"></div></div></div>
+    <div class="flex justify-center gap-1 mb-4"><span class="star" id="star1">⭐</span><span class="star" id="star2">⭐</span><span class="star" id="star3">⭐</span></div>
+    <p class="text-lg text-amber-800 mb-5 font-semibold" id="scoreMessage">Keep practicing!</p>
+    <div class="flex flex-col sm:flex-row gap-3 justify-center flex-wrap">
+      <button class="btn-green px-5 py-2 text-base" id="nextLevelBtn" onclick="goNextLevel()">⬆️ Next Level!</button>
+      <button class="btn-barn px-5 py-2 text-base" id="playAgainBtn" onclick="replayLevel()">🔄 Replay</button>
+      <button class="btn-wood px-5 py-2 text-base" onclick="showPage('gameselect')">🎮 Games Menu</button>
     </div>
   </div>
 </div>
 
 <script>
-// ====== NAVIGATION ======
-const pages = ['home','rule1','rule2','rule3','rule4','rule5','game','score'];
-function showPage(name) {
-  pages.forEach(p => {
-    const el = document.getElementById('page-'+p);
-    if (el) el.classList.remove('active');
-  });
-  const target = document.getElementById('page-'+name);
-  if (target) target.classList.add('active');
-  window.scrollTo(0,0);
-  const homeBtn = document.getElementById('homeBtn');
-  homeBtn.classList.toggle('hidden', name === 'home');
-}
+// ============================================================
+// NAVIGATION & VIDEO
+// ============================================================
+const allPages = ['home','rule1','rule2','rule3','rule4','rule5','gameselect','harvest','fillblank','wordsort','score'];
+const videoIds = {vid1:null,vid2:null,vid3:null,vid4:null,vid5:null};
 
-// ====== TTS ======
-function speak(text, rate = 0.85) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'en-US';
-  utter.rate = rate;
-  window.speechSynthesis.speak(utter);
-}
-function speakQuestion() {
-  const qText = document.getElementById('questionText').textContent;
-  speak(qText);
-}
-
-// ====== GAME DATA ======
-const questions = [
-  { q: "She likes to ___ every morning.", correct: "dance", wrong: "danceing", hint: "Drop the E Rule" },
-  { q: "He is ___ very fast!", correct: "running", wrong: "runing", hint: "CVC Doubling Rule" },
-  { q: "She was ___ at the party.", correct: "sitting", wrong: "siting", hint: "CVC Doubling Rule" },
-  { q: "I ___ you with all my heart.", correct: "love", wrong: "lov", hint: "Silent E — no V ending" },
-  { q: "The sky is ___.", correct: "blue", wrong: "blu", hint: "Silent E — no U ending" },
-  { q: "I ___ you are right.", correct: "believe", wrong: "beleive", hint: "I before E rule" },
-  { q: "She is ___ a book.", correct: "writing", wrong: "writeing", hint: "Drop the E Rule" },
-  { q: "The ___ sits on the throne.", correct: "queen", wrong: "qeen", hint: "QU Rule — Q always needs U!" },
-  { q: "He ___ over the fence.", correct: "hopped", wrong: "hoped", hint: "CVC Doubling Rule" },
-  { q: "What is your ___?", correct: "question", wrong: "qestion", hint: "QU Rule" },
-];
-
-const crops = ['🌽','🥕','🍅','🥦','🌿','🍎','🫛','🌾','🥬','🍋'];
-const incorrectEffects = ['🍂','💨','🌵','💧'];
-
-let currentQ = 0, score = 0, answered = false, shuffledQs = [];
-let cellStatus = [false,false,false,false,false,false];
-
-function shuffle(arr) { return [...arr].sort(() => Math.random()-0.5); }
-
-function startGame() {
-  showPage('game');
-  currentQ = 0; score = 0; answered = false;
-  cellStatus = [false,false,false,false,false,false];
-  shuffledQs = shuffle(questions);
-  resetCells();
-  loadQuestion();
-}
-
-function resetCells() {
-  for (let i=0;i<6;i++) {
-    const c = document.getElementById('cell'+i);
-    c.innerHTML = '';
-    c.classList.remove('dry');
-  }
-}
-
-function loadQuestion() {
-  if (currentQ >= shuffledQs.length) { endGame(); return; }
-  answered = false;
-  const q = shuffledQs[currentQ];
-  document.getElementById('questionText').textContent = q.q;
-  document.getElementById('qNumDisplay').textContent = `Q ${currentQ+1}/${shuffledQs.length}`;
-  document.getElementById('gameProgress').style.width = `${(currentQ/shuffledQs.length)*100}%`;
-  document.getElementById('feedbackMsg').classList.add('hidden');
-
-  // Randomize answer positions
-  const opts = shuffle([{text:q.correct,correct:true},{text:q.wrong,correct:false}]);
-  document.getElementById('ansA').textContent = opts[0].text;
-  document.getElementById('ansB').textContent = opts[1].text;
-  document.getElementById('bagA').dataset.correct = opts[0].correct;
-  document.getElementById('bagB').dataset.correct = opts[1].correct;
-  document.getElementById('bagA').className = 'seed-bag p-4 text-center';
-  document.getElementById('bagB').className = 'seed-bag p-4 text-center';
-  document.getElementById('bagA').onclick = () => handleAnswer(0);
-  document.getElementById('bagB').onclick = () => handleAnswer(1);
-  speak(q.q, 0.85);
-}
-
-function handleAnswer(bagIndex) {
-  if (answered) return;
-  answered = true;
-  const bagEl = document.getElementById(bagIndex === 0 ? 'bagA' : 'bagB');
-  const isCorrect = bagEl.dataset.correct === 'true';
-  const fb = document.getElementById('feedbackMsg');
-  fb.classList.remove('hidden');
-
-  if (isCorrect) {
-    score++;
-    document.getElementById('scoreDisplay').textContent = `Score: ${score} 🌾`;
-    bagEl.classList.add('correct');
-    fb.textContent = '✅ Correct! Great harvest! 🌽';
-    fb.className = 'text-center mt-4 text-xl font-bold fredoka text-green-700';
-    // Plant a crop in next empty cell
-    const cellIdx = cellStatus.indexOf(false);
-    if (cellIdx !== -1) {
-      cellStatus[cellIdx] = 'crop';
-      const cell = document.getElementById('cell'+cellIdx);
-      const crop = document.createElement('span');
-      crop.className = 'crop-emoji';
-      crop.textContent = crops[Math.floor(Math.random()*crops.length)];
-      cell.appendChild(crop);
-    }
-    speak('Correct! Great job!', 1.0);
-  } else {
-    bagEl.classList.add('wrong');
-    fb.textContent = `❌ Try again! Hint: ${shuffledQs[currentQ].hint} 🍂`;
-    fb.className = 'text-center mt-4 text-xl font-bold fredoka text-red-700';
-    // Add dry cell effect
-    const cellIdx = cellStatus.indexOf(false);
-    if (cellIdx !== -1) {
-      cellStatus[cellIdx] = 'dry';
-      const cell = document.getElementById('cell'+cellIdx);
-      cell.classList.add('dry');
-      for (let i=0;i<2;i++) {
-        const leaf = document.createElement('span');
-        leaf.className = 'leaf-emoji';
-        leaf.style.left = (20+Math.random()*60)+'%';
-        leaf.style.top = '10%';
-        leaf.textContent = incorrectEffects[Math.floor(Math.random()*incorrectEffects.length)];
-        cell.appendChild(leaf);
-        setTimeout(()=>leaf.remove(),1200);
+function stopAllVideos(){
+  Object.keys(videoIds).forEach(id=>{
+    const w=document.getElementById(id);
+    if(w){
+      const iframe=w.querySelector('iframe');
+      if(iframe){
+        const src=iframe.src;
+        iframe.remove();
+        // Show thumbnail again
+        const thumb=w.querySelector('.video-thumbnail');
+        if(thumb) thumb.style.display='flex';
+        videoIds[id]=null;
       }
     }
-    speak('Not quite. Try again!', 1.0);
+  });
+}
+
+function loadVideo(wrapperId, src, title){
+  const w=document.getElementById(wrapperId);
+  if(!w) return;
+  const thumb=w.querySelector('.video-thumbnail');
+  const iframe=document.createElement('iframe');
+  iframe.src=src;
+  iframe.setAttribute('allowfullscreen','');
+  iframe.setAttribute('allow','autoplay;encrypted-media');
+  w.appendChild(iframe);
+  if(thumb) thumb.style.display='none';
+  videoIds[wrapperId]=src;
+  w.onclick=null; // prevent double-click
+}
+
+function showPage(name){
+  stopAllVideos();
+  allPages.forEach(p=>{
+    const el=document.getElementById('page-'+p);
+    if(el) el.classList.remove('active');
+  });
+  const t=document.getElementById('page-'+name);
+  if(t) t.classList.add('active');
+  window.scrollTo(0,0);
+  document.getElementById('homeBtn').classList.toggle('hidden',name==='home');
+}
+
+function goHome(){showPage('home');}
+
+// ============================================================
+// TTS — Best Voice Selection
+// ============================================================
+let bestVoice=null;
+function initVoice(){
+  if(!window.speechSynthesis) return;
+  function pickVoice(){
+    const voices=speechSynthesis.getVoices();
+    // Priority: en-US female/Google > en-US > en-GB > any en
+    const priority=['Google US English','Microsoft Aria','Samantha','Karen','Moira','Daniel'];
+    for(const name of priority){
+      const v=voices.find(v=>v.name.includes(name));
+      if(v){bestVoice=v;return;}
+    }
+    // fallback: best en-US
+    bestVoice=voices.find(v=>v.lang==='en-US')||voices.find(v=>v.lang.startsWith('en'))||null;
   }
+  pickVoice();
+  speechSynthesis.onvoiceschanged=pickVoice;
+}
+initVoice();
 
-  setTimeout(() => {
-    currentQ++;
-    loadQuestion();
-  }, 2000);
+let currentTTSBtn=null;
+function speak(text,rate=0.82){
+  if(!window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const utter=new SpeechSynthesisUtterance(text);
+  utter.lang='en-US';
+  utter.rate=rate;
+  utter.pitch=1.05;
+  if(bestVoice) utter.voice=bestVoice;
+  utter.onend=()=>{if(currentTTSBtn) currentTTSBtn.classList.remove('speaking');};
+  speechSynthesis.speak(utter);
+}
+function speakEl(elId){
+  const el=document.getElementById(elId);
+  if(el) speak(el.textContent);
 }
 
-function endGame() {
+// ============================================================
+// GAME DATA — 30 levels × 5 questions = 150 questions total
+// ============================================================
+const QUESTIONS_PER_LEVEL=5;
+
+// All 150 MCQ questions for Harvest + Fill-blank
+const allQuestions=[
+  // --- LEVEL 1-5: Silent E basics ---
+  {q:"She wants to ___ a letter.",correct:"write",wrong:"writ",rule:"Drop E Rule",hint:"write → drop E → writ+ing"},
+  {q:"He rode his ___ to school.",correct:"bike",wrong:"bik",rule:"Magic E",hint:"Magic E: i says its name"},
+  {q:"Can you ___ the cake?",correct:"bake",wrong:"bak",rule:"Magic E",hint:"Magic E: a says its name"},
+  {q:"The cat likes to ___ in the sun.",correct:"bask",wrong:"baske",rule:"No extra E needed",hint:"No silent E here"},
+  {q:"She has a pretty ___ dress.",correct:"blue",wrong:"blu",rule:"No U ending",hint:"English words don't end in U"},
+  // Level 2
+  {q:"I ___ you so much!",correct:"love",wrong:"lov",rule:"No V ending",hint:"English words don't end in V"},
+  {q:"He is ___ his shoes.",correct:"lacing",wrong:"laceing",rule:"Drop E Rule",hint:"lace → drop E → lac+ing"},
+  {q:"The dog is ___ the ball.",correct:"chasing",wrong:"chaseing",rule:"Drop E Rule",hint:"chase → drop E + ing"},
+  {q:"She is ___ a pie.",correct:"baking",wrong:"bakeing",rule:"Drop E Rule",hint:"bake → drop E + ing"},
+  {q:"The bird is ___ over the barn.",correct:"flying",wrong:"flyying",rule:"No double Y",hint:"fly → just add ing"},
+  // Level 3
+  {q:"He is ___ very fast.",correct:"running",wrong:"runing",rule:"CVC Doubling",hint:"run is CVC: double the n"},
+  {q:"She is ___ on the bench.",correct:"sitting",wrong:"siting",rule:"CVC Doubling",hint:"sit is CVC: double the t"},
+  {q:"The rabbit is ___ away.",correct:"hopping",wrong:"hoping",rule:"CVC Doubling",hint:"hop is CVC: double the p"},
+  {q:"Dad is ___ the grass.",correct:"cutting",wrong:"cuting",rule:"CVC Doubling",hint:"cut is CVC: double the t"},
+  {q:"The boy ___ into the pool.",correct:"jumped",wrong:"jumppped",rule:"No triple consonant",hint:"jump ends in mp, no doubling"},
+  // Level 4
+  {q:"I ___ there are fairies.",correct:"believe",wrong:"beleive",rule:"I before E",hint:"believe: bel-IE-ve"},
+  {q:"The letter was ___ yesterday.",correct:"received",wrong:"recieved",rule:"I before E except after C",hint:"After C: E before I"},
+  {q:"I got my birthday ___ today.",correct:"present",wrong:"presant",rule:"Spelling",hint:"pres-ent"},
+  {q:"The ___ sits on the throne.",correct:"queen",wrong:"qeen",rule:"QU Rule",hint:"Q always needs U"},
+  {q:"Please be ___ in the library.",correct:"quiet",wrong:"qiet",rule:"QU Rule",hint:"Q always needs U"},
+  // Level 5
+  {q:"He answered every ___.",correct:"question",wrong:"qestion",rule:"QU Rule",hint:"Q always needs U"},
+  {q:"She ___ the bread carefully.",correct:"sliced",wrong:"sliceed",rule:"Drop E Rule",hint:"slice → drop E + ed"},
+  {q:"The ice ___.",correct:"melted",wrong:"meltted",rule:"No doubling after cluster",hint:"melt ends in lt, no doubling"},
+  {q:"He ___ the door shut.",correct:"slammed",wrong:"slamed",rule:"CVC Doubling",hint:"slam is CVC: double m"},
+  {q:"She is ___ a rainbow.",correct:"tracing",wrong:"traceing",rule:"Drop E Rule",hint:"trace → drop E + ing"},
+  // Level 6-10: Medium
+  {q:"The cat ___ after the mouse.",correct:"ran",wrong:"rann",rule:"Past tense, no doubling",hint:"ran is already past tense"},
+  {q:"She is ___ her nails.",correct:"filing",wrong:"fileing",rule:"Drop E Rule",hint:"file → drop E + ing"},
+  {q:"He ___ over the fence.",correct:"hopped",wrong:"hoped",rule:"CVC Doubling",hint:"hop CVC → hopped vs hope+d"},
+  {q:"The student ___ the answer.",correct:"guessed",wrong:"guesseed",rule:"No triple letters",hint:"guess + ed = guessed"},
+  {q:"I need a ___ of paper.",correct:"piece",wrong:"peice",rule:"I before E",hint:"pie-ce: I before E"},
+  // Level 7
+  {q:"She is ___ a quilt.",correct:"making",wrong:"makeing",rule:"Drop E Rule",hint:"make → drop E + ing"},
+  {q:"The dog ___ its tail.",correct:"wagged",wrong:"waged",rule:"CVC Doubling",hint:"wag is CVC: double g"},
+  {q:"He ___ quickly.",correct:"moved",wrong:"movved",rule:"Drop E + ed",hint:"move → drop E + ed"},
+  {q:"The turtle is ___ slowly.",correct:"plodding",wrong:"ploding",rule:"CVC Doubling",hint:"plod is CVC: double d"},
+  {q:"Can you ___ me that book?",correct:"give",wrong:"giv",rule:"No V ending",hint:"English words don't end in V"},
+  // Level 8
+  {q:"That was a ___ thing to say.",correct:"brave",wrong:"brav",rule:"No V ending",hint:"English words don't end in V"},
+  {q:"She took a deep ___.",correct:"breath",wrong:"breathe",rule:"Noun form",hint:"breath is the noun, breathe is the verb"},
+  {q:"Please ___ through your nose.",correct:"breathe",wrong:"breath",rule:"Verb form",hint:"breathe is the verb"},
+  {q:"The clown made a ___ face.",correct:"huge",wrong:"hug",rule:"Magic E / Soft G",hint:"huge: silent E keeps G soft"},
+  {q:"I can ___ the music.",correct:"hear",wrong:"heer",rule:"Spelling",hint:"h-ear"},
+  // Level 9
+  {q:"The ___ is in the garden.",correct:"scarecrow",wrong:"scairecrow",rule:"Spelling",hint:"scare + crow"},
+  {q:"She is ___ a story.",correct:"writing",wrong:"writting",rule:"Drop E Rule",hint:"write → drop E + ing, no double"},
+  {q:"He put on his ___ every morning.",correct:"gloves",wrong:"glovs",rule:"No V ending",hint:"English words don't end in V"},
+  {q:"The bread was ___.",correct:"stale",wrong:"stal",rule:"Magic E",hint:"Magic E: a says its name"},
+  {q:"She is ___ a cake.",correct:"icing",wrong:"iceing",rule:"Drop E Rule",hint:"ice → drop E + ing"},
+  // Level 10
+  {q:"He ___ the rope tightly.",correct:"gripped",wrong:"griped",rule:"CVC Doubling",hint:"grip is CVC: double p"},
+  {q:"The farmer ___ the field.",correct:"plowed",wrong:"plowd",rule:"Spelling",hint:"plow + ed"},
+  {q:"She ___ in her journal.",correct:"wrote",wrong:"wroted",rule:"Irregular past",hint:"write → wrote (irregular)"},
+  {q:"The baby is ___.",correct:"cute",wrong:"coot",rule:"Magic E",hint:"Magic E: u says its name"},
+  {q:"Can I have a ___?",correct:"clue",wrong:"clu",rule:"No U ending",hint:"English words don't end in U"},
+  // Level 11-15: Harder
+  {q:"She was ___ from the sun.",correct:"shaded",wrong:"shadded",rule:"Drop E Rule",hint:"shade → drop E + d"},
+  {q:"The horse is ___ in the field.",correct:"grazing",wrong:"grazeing",rule:"Drop E Rule",hint:"graze → drop E + ing"},
+  {q:"He is ___ on the rope.",correct:"tugging",wrong:"tuging",rule:"CVC Doubling",hint:"tug is CVC: double g"},
+  {q:"The fox is ___.",correct:"cunning",wrong:"cuning",rule:"CVC Doubling",hint:"CVC: double n"},
+  {q:"She sang in the ___ choir.",correct:"village",wrong:"villag",rule:"Silent E keeps G soft",hint:"G needs E to stay soft /j/"},
+  // Level 12
+  {q:"He ___ all the apples.",correct:"picked",wrong:"pickked",rule:"No double after ck",hint:"pick + ed = picked"},
+  {q:"They are ___ the barn.",correct:"fixing",wrong:"fixeing",rule:"No E needed",hint:"fix just adds -ing directly"},
+  {q:"She is ___ the horses.",correct:"feeding",wrong:"feading",rule:"Spelling ee",hint:"feed + ing"},
+  {q:"The farmer is ___ seeds.",correct:"scattering",wrong:"scatering",rule:"2-syllable CVC rule",hint:"scatter: double t (stress on first syllable)"},
+  {q:"He held his breath and ___.",correct:"dived",wrong:"divved",rule:"Drop E Rule",hint:"dive → drop E + d"},
+  // Level 13
+  {q:"She drove the ___ tractor.",correct:"huge",wrong:"hueg",rule:"Silent E",hint:"Magic E keeps G soft"},
+  {q:"I can ___ the fresh bread.",correct:"smell",wrong:"smel",rule:"Double final L",hint:"smell has double ll"},
+  {q:"The lamb is ___ in the meadow.",correct:"skipping",wrong:"skiping",rule:"CVC Doubling",hint:"skip is CVC: double p"},
+  {q:"She is ___ hay into bales.",correct:"bundling",wrong:"bundleing",rule:"Drop E Rule",hint:"bundle → drop E + ing"},
+  {q:"The rooster ___ at dawn.",correct:"crowed",wrong:"crowwed",rule:"No double W",hint:"crow + ed = crowed"},
+  // Level 14
+  {q:"He is ___ the fence.",correct:"mending",wrong:"mendding",rule:"No doubling after nd",hint:"mend + ing, no double"},
+  {q:"She left a ___ on the table.",correct:"note",wrong:"not",rule:"Magic E",hint:"Magic E: o says its name"},
+  {q:"The harvest was ___.",correct:"amazing",wrong:"amazeing",rule:"Drop E Rule",hint:"amaze → drop E + ing"},
+  {q:"He is ___ the corn.",correct:"shucking",wrong:"shuckinng",rule:"No triple letters",hint:"shuck + ing = shucking"},
+  {q:"She found a ___ under the rock.",correct:"grub",wrong:"grubb",rule:"No double at end",hint:"no doubling at end of word"},
+  // Level 15
+  {q:"The pigs are ___ in the mud.",correct:"wallowing",wrong:"wallowwing",rule:"No double W",hint:"wallow + ing"},
+  {q:"He is ___ the field.",correct:"plowing",wrong:"plowwing",rule:"No double W",hint:"plow + ing"},
+  {q:"She is ___ eggs in the basket.",correct:"placing",wrong:"placeing",rule:"Drop E Rule",hint:"place → drop E + ing"},
+  {q:"The sun is ___ brightly.",correct:"shining",wrong:"shinning",rule:"Drop E Rule",hint:"shine → drop E + ing (not CVC double)"},
+  {q:"He ___ the scarecrow in the field.",correct:"placed",wrong:"placced",rule:"Drop E Rule",hint:"place → drop E + d"},
+  // Level 16-20: Advanced
+  {q:"She is ___ a quilt with patches.",correct:"stitching",wrong:"stitchhing",rule:"No double after ch",hint:"stitch + ing"},
+  {q:"The puppy ___ the ball.",correct:"grabbed",wrong:"grabed",rule:"CVC Doubling",hint:"grab is CVC: double b"},
+  {q:"He was ___ at the sight.",correct:"amazed",wrong:"amazeed",rule:"Drop E Rule",hint:"amaze → drop E + d"},
+  {q:"She is ___ her homework.",correct:"doing",wrong:"doeing",rule:"No drop when vowel+ing",hint:"do + ing (no silent E to drop)"},
+  {q:"The wheat field is ___.",correct:"golden",wrong:"goldon",rule:"Spelling",hint:"gold + en"},
+  // Level 17
+  {q:"He ___ the horse every morning.",correct:"grooms",wrong:"gromes",rule:"Spelling",hint:"groom + s"},
+  {q:"She is ___ her boots.",correct:"lacing",wrong:"laccing",rule:"Drop E Rule",hint:"lace → drop E + ing"},
+  {q:"The crow was ___ on the fence.",correct:"perched",wrong:"perchhed",rule:"No double after ch",hint:"perch + ed"},
+  {q:"I cannot ___ why it happened.",correct:"fathom",wrong:"fathome",rule:"No extra E",hint:"fathom does not end in silent E"},
+  {q:"She ___ the seed carefully.",correct:"planted",wrong:"plantted",rule:"No double after nt",hint:"plant + ed"},
+  // Level 18
+  {q:"He tied a ___ in the rope.",correct:"knot",wrong:"nott",rule:"Silent K + no double",hint:"knot: silent k, no double"},
+  {q:"The baby chick is ___.",correct:"hatching",wrong:"hatchhing",rule:"No double after tch",hint:"hatch + ing"},
+  {q:"She is ___ a scarecrow.",correct:"building",wrong:"buildding",rule:"No double after ld",hint:"build + ing"},
+  {q:"The barn door ___ open.",correct:"creaked",wrong:"creeked",rule:"Spelling ea",hint:"creak + ed"},
+  {q:"He is ___ the cows.",correct:"milking",wrong:"milkking",rule:"No double after lk",hint:"milk + ing"},
+  // Level 19
+  {q:"She is ___ herself for the harvest.",correct:"preparing",wrong:"prepareing",rule:"Drop E Rule",hint:"prepare → drop E + ing"},
+  {q:"The tractor ___ slowly.",correct:"rumbled",wrong:"rumbleed",rule:"Drop E + d",hint:"rumble → drop E + d"},
+  {q:"He is ___ the fence posts.",correct:"hammering",wrong:"hammerring",rule:"No triple letters",hint:"hammer + ing"},
+  {q:"The crops are ___ well.",correct:"growing",wrong:"growwing",rule:"No double W",hint:"grow + ing"},
+  {q:"She ___ very hard.",correct:"strived",wrong:"strivved",rule:"Drop E Rule",hint:"strive → drop E + d"},
+  // Level 20
+  {q:"He is ___ about the weather.",correct:"worried",wrong:"worryed",rule:"Y to I rule",hint:"worry → y becomes i + ed"},
+  {q:"She is ___ the harvest songs.",correct:"humming",wrong:"huming",rule:"CVC Doubling",hint:"hum is CVC: double m"},
+  {q:"The tractor ___ through the field.",correct:"plodded",wrong:"ploded",rule:"CVC Doubling",hint:"plod is CVC: double d"},
+  {q:"He is ___ the scarecrow.",correct:"repairing",wrong:"repairring",rule:"No double after ir",hint:"repair + ing"},
+  {q:"She found the answer was ___.",correct:"bizarre",wrong:"bizare",rule:"Spelling",hint:"biz-zarre: double z, double r"},
+  // Level 21-25: Expert
+  {q:"The scientist made a ___.",correct:"discovery",wrong:"discovry",rule:"Spelling",hint:"dis-cov-er-y"},
+  {q:"He is ___ a plan.",correct:"devising",wrong:"deviseing",rule:"Drop E Rule",hint:"devise → drop E + ing"},
+  {q:"The field was ___ with fog.",correct:"shrouded",wrong:"shroudded",rule:"No double after ou",hint:"shroud + ed"},
+  {q:"She is ___ the pumpkins.",correct:"harvesting",wrong:"harvestting",rule:"No double after st",hint:"harvest + ing"},
+  {q:"He is ___ for treasure.",correct:"digging",wrong:"diging",rule:"CVC Doubling",hint:"dig is CVC: double g"},
+  // Level 22
+  {q:"She is ___ the soil.",correct:"enriching",wrong:"enrichhing",rule:"No double after ch",hint:"enrich + ing"},
+  {q:"The rooster ___ three times.",correct:"crowed",wrong:"crowwed",rule:"No double W",hint:"crow + ed"},
+  {q:"He ___ the flowers beautifully.",correct:"arranged",wrong:"arrangeed",rule:"Drop E + d",hint:"arrange → drop E + d"},
+  {q:"She is ___ a new recipe.",correct:"trying",wrong:"tryying",rule:"Y + ing = ying",hint:"try + ing = trying (no double)"},
+  {q:"The cow ___ in the field.",correct:"grazed",wrong:"grazeed",rule:"Drop E Rule",hint:"graze → drop E + d"},
+  // Level 23
+  {q:"He is ___ the crop rotation.",correct:"planning",wrong:"planing",rule:"CVC Doubling",hint:"plan is CVC: double n"},
+  {q:"The weather is ___ today.",correct:"bizarre",wrong:"bizzare",rule:"Spelling",hint:"biz-zarre"},
+  {q:"She is ___ a new field.",correct:"cultivating",wrong:"cultivateing",rule:"Drop E Rule",hint:"cultivate → drop E + ing"},
+  {q:"He ___ the seeds in a row.",correct:"sowed",wrong:"sowwed",rule:"No double W",hint:"sow + ed = sowed"},
+  {q:"The old barn was ___ down.",correct:"tumbling",wrong:"tumbleing",rule:"Drop E Rule",hint:"tumble → drop E + ing"},
+  // Level 24
+  {q:"She is ___ the chickens.",correct:"corralling",wrong:"coraling",rule:"Double L",hint:"corral: double l → corralling"},
+  {q:"He is ___ the harvest festival.",correct:"organizing",wrong:"organizeing",rule:"Drop E Rule",hint:"organize → drop E + ing"},
+  {q:"The scarecrow is ___ the birds.",correct:"scaring",wrong:"scareing",rule:"Drop E Rule",hint:"scare → drop E + ing"},
+  {q:"She has a ___ sense of direction.",correct:"keen",wrong:"kean",rule:"Spelling ee",hint:"keen: double ee"},
+  {q:"He is ___ the fence carefully.",correct:"mending",wrong:"mendding",rule:"No double after nd",hint:"mend + ing"},
+  // Level 25
+  {q:"She is ___ the harvest moon.",correct:"admiring",wrong:"admireing",rule:"Drop E Rule",hint:"admire → drop E + ing"},
+  {q:"The wheat ___ in the breeze.",correct:"swayed",wrong:"swayyed",rule:"No double Y",hint:"sway + ed = swayed"},
+  {q:"He is ___ new seeds for spring.",correct:"selecting",wrong:"selectting",rule:"No double after ct",hint:"select + ing"},
+  {q:"The farmer is ___ a better crop.",correct:"breeding",wrong:"breedding",rule:"No double after ee",hint:"breed + ing"},
+  {q:"She ___ over the puddle.",correct:"stepped",wrong:"steped",rule:"CVC Doubling",hint:"step is CVC: double p"},
+  // Level 26-30: Master
+  {q:"He is ___ the barn by hand.",correct:"whitewashing",wrong:"whitewashhing",rule:"No double after sh",hint:"whitewash + ing"},
+  {q:"She is ___ the prize pig.",correct:"grooming",wrong:"groomming",rule:"No double after oo",hint:"groom + ing"},
+  {q:"The festival is ___ tonight.",correct:"commencing",wrong:"commenceing",rule:"Drop E Rule",hint:"commence → drop E + ing"},
+  {q:"He has ___ all his chores.",correct:"completed",wrong:"completeed",rule:"Drop E + d",hint:"complete → drop E + d"},
+  {q:"She is ___ a beautiful bouquet.",correct:"arranging",wrong:"arrangeing",rule:"Drop E Rule",hint:"arrange → drop E + ing"},
+  // Level 27
+  {q:"The harvest was ___ by the rain.",correct:"delayed",wrong:"delaied",rule:"ay + ed = ayed",hint:"delay + ed = delayed"},
+  {q:"He is ___ equipment maintenance.",correct:"scheduling",wrong:"scheduleing",rule:"Drop E Rule",hint:"schedule → drop E + ing"},
+  {q:"She is ___ the irrigation system.",correct:"managing",wrong:"manageing",rule:"Drop E Rule",hint:"manage → drop E + ing"},
+  {q:"The crops were ___ away by wind.",correct:"blown",wrong:"blowned",rule:"Irregular past",hint:"blow → blown (irregular)"},
+  {q:"He is ___ new farming techniques.",correct:"adopting",wrong:"adoptting",rule:"No double after pt",hint:"adopt + ing"},
+  // Level 28
+  {q:"She is ___ the perfect harvest time.",correct:"predicting",wrong:"predictting",rule:"No double after ct",hint:"predict + ing"},
+  {q:"The tractor is ___ in the mud.",correct:"stuck",wrong:"stucked",rule:"Irregular past",hint:"stick → stuck (irregular)"},
+  {q:"He is ___ crop disease.",correct:"combating",wrong:"combatting",rule:"2-syllable, stress on 1st",hint:"COM-bat: stress on first, no double"},
+  {q:"She is ___ the sustainable farm.",correct:"developing",wrong:"developping",rule:"No double: stress not on last",hint:"de-VEL-op: stress not on last syllable"},
+  {q:"The harvest ___ exceeded expectations.",correct:"yield",wrong:"yeild",rule:"I before E",hint:"I before E: yield"},
+  // Level 29
+  {q:"He is ___ farming methods.",correct:"revolutionizing",wrong:"revolutionizeing",rule:"Drop E Rule",hint:"revolutionize → drop E + ing"},
+  {q:"She is ___ organic produce.",correct:"marketing",wrong:"marketking",rule:"No extra k",hint:"market + ing = marketing"},
+  {q:"The co-op is ___ new members.",correct:"welcoming",wrong:"welcomeing",rule:"Drop E Rule",hint:"welcome → drop E + ing"},
+  {q:"He ___ all the vegetables by hand.",correct:"harvested",wrong:"harvestted",rule:"No double after st",hint:"harvest + ed"},
+  {q:"She is ___ the best soil conditions.",correct:"ensuring",wrong:"ensureing",rule:"Drop E Rule",hint:"ensure → drop E + ing"},
+  // Level 30
+  {q:"The committee is ___ the farm.",correct:"overseeing",wrong:"overseing",rule:"see + ing keeps E",hint:"oversee: keep E + ing = overseeing"},
+  {q:"He is ___ the annual harvest report.",correct:"compiling",wrong:"compileing",rule:"Drop E Rule",hint:"compile → drop E + ing"},
+  {q:"She is ___ the field for next season.",correct:"preparing",wrong:"preparring",rule:"Drop E, no double",hint:"prepare → drop E + ing, no double"},
+  {q:"The co-op ___ great profits this year.",correct:"yielded",wrong:"yeilded",rule:"I before E",hint:"yield + ed: I before E"},
+  {q:"He is ___ sustainable farming practices.",correct:"championing",wrong:"championning",rule:"No double after on",hint:"champion + ing"},
+];
+
+// Word Sort data — 30 rounds
+const sortRounds=[
+  {instruction:"Sort into: Magic E words vs CVC words",buckets:["✨ Magic E","📝 CVC (Double)"],words:["bake","run","cake","sit","bike","hop","like","cut"],answers:{"✨ Magic E":["bake","cake","bike","like"],"📝 CVC (Double)":["run","sit","hop","cut"]}},
+  {instruction:"Sort: Drop-E words vs Keep-E words",buckets:["✂️ Drop the E","🔒 Keep the E"],words:["making","seeing","dancing","agreeing","writing","freeing","baking","fleeing"],answers:{"✂️ Drop the E":["making","dancing","writing","baking"],"🔒 Keep the E":["seeing","agreeing","freeing","fleeing"]}},
+  {instruction:"Sort: Silent E words vs No Silent E words",buckets:["🔇 Has Silent E","🔊 No Silent E"],words:["love","run","cave","sit","blue","hop","brave","cut"],answers:{"🔇 Has Silent E":["love","cave","blue","brave"],"🔊 No Silent E":["run","sit","hop","cut"]}},
+  {instruction:"Sort: QU words vs Non-QU words",buckets:["👑 QU Words","🌾 Other Words"],words:["queen","run","quick","bike","question","love","quiet","field"],answers:{"👑 QU Words":["queen","quick","question","quiet"],"🌾 Other Words":["run","bike","love","field"]}},
+  {instruction:"Sort: I before E vs E before I",buckets:["🅸 I before E","🔄 E before I (after C)"],words:["believe","receive","field","ceiling","piece","deceive","brief","perceive"],answers:{"🅸 I before E":["believe","field","piece","brief"],"🔄 E before I (after C)":["receive","ceiling","deceive","perceive"]}},
+  // Rounds 6-10
+  {instruction:"Sort: -ing words (CVC double) vs -ing words (Drop E)",buckets:["✏️ CVC +ing","✂️ Drop E +ing"],words:["running","making","sitting","writing","hopping","dancing","cutting","baking"],answers:{"✏️ CVC +ing":["running","sitting","hopping","cutting"],"✂️ Drop E +ing":["making","writing","dancing","baking"]}},
+  {instruction:"Sort: Words ending in V+E vs U+E (both need E!)",buckets:["🔤 V+E ending","🔤 U+E ending"],words:["love","blue","live","clue","brave","due","save","cue"],answers:{"🔤 V+E ending":["love","live","brave","save"],"🔤 U+E ending":["blue","clue","due","cue"]}},
+  {instruction:"Sort: Soft C /s/ words vs Hard C /k/ words",buckets:["🔤 Soft C /s/","🔤 Hard C /k/"],words:["face","cat","rice","cup","ace","corn","race","coat"],answers:{"🔤 Soft C /s/":["face","rice","ace","race"],"🔤 Hard C /k/":["cat","cup","corn","coat"]}},
+  {instruction:"Sort: Soft G /j/ words vs Hard G /g/ words",buckets:["🔤 Soft G /j/","🔤 Hard G /g/"],words:["age","goat","huge","gap","cage","grab","rage","got"],answers:{"🔤 Soft G /j/":["age","huge","cage","rage"],"🔤 Hard G /g/":["goat","gap","grab","got"]}},
+  {instruction:"Sort: Noun form vs Verb form (Silent E changes)",buckets:["📦 Noun","⚡ Verb"],words:["bath","breathe","bathe","breath","cloth","clothe","teeth","teethe"],answers:{"📦 Noun":["bath","breath","cloth","teeth"],"⚡ Verb":["breathe","bathe","clothe","teethe"]}},
+  // Rounds 11-15
+  {instruction:"Sort: 1-syllable CVC (double) vs 2+ syllable (no double)",buckets:["1️⃣ 1 Syllable CVC","2️⃣ Multi-Syllable"],words:["running","entering","sitting","offering","hopping","happening","cutting","opening"],answers:{"1️⃣ 1 Syllable CVC":["running","sitting","hopping","cutting"],"2️⃣ Multi-Syllable":["entering","offering","happening","opening"]}},
+  {instruction:"Sort: Drop E rule vs No change needed",buckets:["✂️ Drop E + ing","➕ Just add -ing"],words:["making","playing","writing","eating","dancing","running","baking","jumping"],answers:{"✂️ Drop E + ing":["making","writing","dancing","baking"],"➕ Just add -ing":["playing","eating","running","jumping"]}},
+  {instruction:"Sort: Long vowel sounds vs Short vowel sounds",buckets:["📢 Long Vowel","🔉 Short Vowel"],words:["cake","cap","bike","bit","note","not","cube","cup"],answers:{"📢 Long Vowel":["cake","bike","note","cube"],"🔉 Short Vowel":["cap","bit","not","cup"]}},
+  {instruction:"Sort: Silent E words (Magic E) vs Non-Magic-E",buckets:["✨ Magic E","🌾 No Magic E"],words:["pine","pin","plane","plan","cute","cut","note","not"],answers:{"✨ Magic E":["pine","plane","cute","note"],"🌾 No Magic E":["pin","plan","cut","not"]}},
+  {instruction:"Sort: Correct spelling vs Incorrect spelling",buckets:["✅ Correct","❌ Incorrect"],words:["running","runing","baking","bakeing","writing","writeing","sitting","siting"],answers:{"✅ Correct":["running","baking","writing","sitting"],"❌ Incorrect":["runing","bakeing","writeing","siting"]}},
+  // Rounds 16-20
+  {instruction:"Sort: QU words vs Words with just Q (rare!)",buckets:["QU Together","Q without U (rare)"],words:["queen","qoph","quick","qi","question","qat","quiet","qigong"],answers:{"QU Together":["queen","quick","question","quiet"],"Q without U (rare)":["qoph","qi","qat","qigong"]}},
+  {instruction:"Sort: Homophones with Silent E vs Without",buckets:["🔇 Silent E form","🔊 No Silent E"],words:["bye","by","ore","or","bee","be","tale","tail"],answers:{"🔇 Silent E form":["bye","ore","bee","tale"],"🔊 No Silent E":["by","or","be","tail"]}},
+  {instruction:"Sort: CVC -ed words vs Non-CVC -ed words",buckets:["✏️ CVC +ed (doubled)","➕ Regular +ed"],words:["hopped","jumped","stopped","walked","grabbed","learned","slapped","played"],answers:{"✏️ CVC +ed (doubled)":["hopped","stopped","grabbed","slapped"],"➕ Regular +ed":["jumped","walked","learned","played"]}},
+  {instruction:"Sort: Vowel suffix words vs Consonant suffix words",buckets:["🅰️ Vowel suffix (-ing/-ed)","🔤 Consonant suffix (-ful/-ly)"],words:["making","hopeful","running","slowly","writing","careful","baking","gladly"],answers:{"🅰️ Vowel suffix (-ing/-ed)":["making","running","writing","baking"],"🔤 Consonant suffix (-ful/-ly)":["hopeful","slowly","careful","gladly"]}},
+  {instruction:"Sort: Farm animals vs Farm plants",buckets:["🐄 Farm Animals","🌽 Farm Plants"],words:["cow","corn","pig","wheat","hen","barley","goat","oat"],answers:{"🐄 Farm Animals":["cow","pig","hen","goat"],"🌽 Farm Plants":["corn","wheat","barley","oat"]}},
+  // Rounds 21-25
+  {instruction:"Sort: I-before-E exceptions vs Rule followers",buckets:["⚠️ Exceptions","✅ Rule Follows"],words:["weird","believe","science","piece","their","field","either","brief"],answers:{"⚠️ Exceptions":["weird","science","their","either"],"✅ Rule Follows":["believe","piece","field","brief"]}},
+  {instruction:"Sort: Words that DROP the E vs words that KEEP the E",buckets:["✂️ Drop E","🔒 Keep E"],words:["loving","freeing","hoping","seeing","baking","agreeing","writing","fleeing"],answers:{"✂️ Drop E":["loving","hoping","baking","writing"],"🔒 Keep E":["freeing","seeing","agreeing","fleeing"]}},
+  {instruction:"Sort: Correct -ing forms vs Incorrect -ing forms",buckets:["✅ Correct","❌ Wrong"],words:["shining","shinning","gripping","griping","slicing","sliceing","humming","huming"],answers:{"✅ Correct":["shining","gripping","slicing","humming"],"❌ Wrong":["shinning","griping","sliceing","huming"]}},
+  {instruction:"Sort: Silent E changes noun → verb vs Regular words",buckets:["⚡ Noun→Verb (Silent E)","🌾 Regular Words"],words:["bathe","run","breathe","hop","clothe","sit","teethe","cut"],answers:{"⚡ Noun→Verb (Silent E)":["bathe","breathe","clothe","teethe"],"🌾 Regular Words":["run","hop","sit","cut"]}},
+  {instruction:"Sort: Words needing DOUBLE consonant vs Single consonant",buckets:["✏️ Double Consonant","📝 Single Consonant"],words:["running","making","sitting","writing","hopping","baking","cutting","dancing"],answers:{"✏️ Double Consonant":["running","sitting","hopping","cutting"],"📝 Single Consonant":["making","writing","baking","dancing"]}},
+  // Rounds 26-30
+  {instruction:"Sort: Soft sound (E effect) vs Hard sound",buckets:["🔤 Soft Sound (E helps)","💪 Hard Sound"],words:["face","cat","age","gap","rice","corn","huge","goat"],answers:{"🔤 Soft Sound (E helps)":["face","age","rice","huge"],"💪 Hard Sound":["cat","gap","corn","goat"]}},
+  {instruction:"Sort: Long A words vs Short A words",buckets:["📢 Long A /eɪ/","🔉 Short A /æ/"],words:["bake","back","cake","cap","save","sad","lane","land"],answers:{"📢 Long A /eɪ/":["bake","cake","save","lane"],"🔉 Short A /æ/":["back","cap","sad","land"]}},
+  {instruction:"Sort: Long I words vs Short I words",buckets:["📢 Long I /aɪ/","🔉 Short I /ɪ/"],words:["bike","bit","like","lip","kite","kit","pine","pin"],answers:{"📢 Long I /aɪ/":["bike","like","kite","pine"],"🔉 Short I /ɪ/":["bit","lip","kit","pin"]}},
+  {instruction:"Sort: Long O words vs Short O words",buckets:["📢 Long O /oʊ/","🔉 Short O /ɒ/"],words:["note","not","rope","rod","mole","mop","cone","con"],answers:{"📢 Long O /oʊ/":["note","rope","mole","cone"],"🔉 Short O /ɒ/":["not","rod","mop","con"]}},
+  {instruction:"Master Sort: Apply ALL spelling rules!",buckets:["✨ Magic E","✂️ Drop E +ing","✏️ CVC Double","👑 QU Rule"],words:["cake","making","running","queen","bike","writing","sitting","question"],answers:{"✨ Magic E":["cake","bike"],"✂️ Drop E +ing":["making","writing"],"✏️ CVC Double":["running","sitting"],"👑 QU Rule":["queen","question"]}},
+];
+
+// ============================================================
+// GAME STATE
+// ============================================================
+let gameMode='harvest';
+let currentLevel=1;
+let levelScore=0, levelStreak=0, levelAnswered=0;
+let levelQs=[];
+let cellStatus=Array(6).fill(false);
+const crops=['🌽','🥕','🍅','🥦','🍎','🫛','🌾','🥬','🍋','🌻'];
+const badEffects=['🍂','💨','🌵','💧'];
+
+function getLevelQuestions(level){
+  const start=(level-1)*QUESTIONS_PER_LEVEL;
+  return allQuestions.slice(start,start+QUESTIONS_PER_LEVEL);
+}
+function shuffle(arr){return[...arr].sort(()=>Math.random()-.5);}
+
+function startGame(mode){
+  gameMode=mode;
+  currentLevel=1;
+  showPage(mode);
+  initLevel();
+}
+function initLevel(){
+  levelScore=0; levelStreak=0; levelAnswered=0;
+  cellStatus=Array(6).fill(false);
+  if(gameMode==='harvest') initHarvest();
+  else if(gameMode==='fillblank') initFill();
+  else if(gameMode==='wordsort') initSort();
+}
+function goNextLevel(){
+  if(currentLevel<30) currentLevel++;
+  showPage(gameMode);
+  initLevel();
+}
+function replayLevel(){
+  showPage(gameMode);
+  initLevel();
+}
+
+// ============================================================
+// HARVEST GAME
+// ============================================================
+let hQIdx=0, hAnswered=false, hQs=[];
+function initHarvest(){
+  hQIdx=0; hAnswered=false;
+  hQs=shuffle(getLevelQuestions(currentLevel));
+  resetFarmCells('h');
+  document.getElementById('hLevelBadge').textContent=`Lv.${currentLevel}`;
+  document.getElementById('hScoreDisplay').textContent=`Score: 0`;
+  document.getElementById('hStreakDisplay').textContent=`🔥 0`;
+  document.getElementById('hFeedback').classList.add('hidden');
+  loadHQ();
+}
+function resetFarmCells(prefix){
+  for(let i=0;i<6;i++){
+    const c=document.getElementById(prefix+'cell'+i);
+    if(c){c.innerHTML='';c.classList.remove('dry');}
+  }
+}
+function loadHQ(){
+  if(hQIdx>=hQs.length){endHarvest();return;}
+  hAnswered=false;
+  const q=hQs[hQIdx];
+  document.getElementById('hQuestion').textContent=q.q;
+  document.getElementById('hQNum').textContent=`Q ${hQIdx+1}/${hQs.length}`;
+  document.getElementById('hProgress').style.width=`${(hQIdx/hQs.length)*100}%`;
+  document.getElementById('hFeedback').classList.add('hidden');
+  const opts=shuffle([{text:q.correct,ok:true},{text:q.wrong,ok:false}]);
+  document.getElementById('hAnsA').textContent=opts[0].text;
+  document.getElementById('hAnsB').textContent=opts[1].text;
+  document.getElementById('hBagA').dataset.ok=opts[0].ok;
+  document.getElementById('hBagB').dataset.ok=opts[1].ok;
+  ['hBagA','hBagB'].forEach(id=>{
+    const el=document.getElementById(id);
+    el.className='seed-bag p-4 text-center';
+    el.style.pointerEvents='auto';
+  });
+  speak(q.q,0.82);
+}
+function pickHarvest(bagId){
+  if(hAnswered) return;
+  hAnswered=true;
+  const bag=document.getElementById(bagId);
+  const ok=bag.dataset.ok==='true';
+  const fb=document.getElementById('hFeedback');
+  fb.classList.remove('hidden');
+  ['hBagA','hBagB'].forEach(id=>document.getElementById(id).style.pointerEvents='none');
+  if(ok){
+    levelScore++; levelStreak++;
+    document.getElementById('hScoreDisplay').textContent=`Score: ${levelScore}`;
+    document.getElementById('hStreakDisplay').textContent=`🔥 ${levelStreak}`;
+    bag.classList.add('correct');
+    fb.textContent='✅ Correct! Great harvest! 🌽';
+    fb.className='text-center text-xl font-bold fredoka text-green-700';
+    plantCrop('h');
+    speak('Correct! Well done!',1.0);
+  } else {
+    levelStreak=0;
+    document.getElementById('hStreakDisplay').textContent=`🔥 0`;
+    bag.classList.add('wrong');
+    fb.textContent=`❌ Hint: ${hQs[hQIdx].hint} 🍂`;
+    fb.className='text-center text-xl font-bold fredoka text-red-700';
+    dryCell('h');
+    speak('Not quite. Try to remember the rule!',1.0);
+  }
+  setTimeout(()=>{hQIdx++;loadHQ();},2200);
+}
+function endHarvest(){showScore('harvest',levelScore,hQs.length);}
+function plantCrop(prefix){
+  const idx=cellStatus.indexOf(false);
+  if(idx===-1) return;
+  cellStatus[idx]='crop';
+  const cell=document.getElementById(prefix+'cell'+idx);
+  const e=document.createElement('span');
+  e.className='crop-emoji';
+  e.textContent=crops[Math.floor(Math.random()*crops.length)];
+  cell.appendChild(e);
+}
+function dryCell(prefix){
+  const idx=cellStatus.indexOf(false);
+  if(idx===-1) return;
+  cellStatus[idx]='dry';
+  const cell=document.getElementById(prefix+'cell'+idx);
+  cell.classList.add('dry');
+  for(let i=0;i<2;i++){
+    const l=document.createElement('span');
+    l.className='leaf-emoji';
+    l.style.left=(20+Math.random()*60)+'%';
+    l.style.top='10%';
+    l.textContent=badEffects[Math.floor(Math.random()*badEffects.length)];
+    cell.appendChild(l);
+    setTimeout(()=>l.remove(),1200);
+  }
+}
+
+// ============================================================
+// FILL BLANK GAME
+// ============================================================
+let fQIdx=0, fAnswered=false, fQs=[], fHintShown=false;
+function initFill(){
+  fQIdx=0; fAnswered=false; fHintShown=false;
+  fQs=shuffle(getLevelQuestions(currentLevel));
+  resetFarmCells('f');
+  document.getElementById('fLevelBadge').textContent=`Lv.${currentLevel}`;
+  document.getElementById('fScoreDisplay').textContent=`Score: 0`;
+  document.getElementById('fStreakDisplay').textContent=`🔥 0`;
+  document.getElementById('fFeedback').classList.add('hidden');
+  document.getElementById('fHintText').textContent='';
+  loadFQ();
+}
+function loadFQ(){
+  if(fQIdx>=fQs.length){endFill();return;}
+  fAnswered=false; fHintShown=false;
+  const q=fQs[fQIdx];
+  document.getElementById('fQuestion').textContent=q.q;
+  document.getElementById('fQNum').textContent=`Q ${fQIdx+1}/${fQs.length}`;
+  document.getElementById('fProgress').style.width=`${(fQIdx/fQs.length)*100}%`;
+  document.getElementById('fInput').value='';
+  document.getElementById('fInput').className='fill-input';
+  document.getElementById('fFeedback').classList.add('hidden');
+  document.getElementById('fHintText').textContent='';
+  document.getElementById('fInput').disabled=false;
+  document.getElementById('fInput').focus();
+  speak(q.q,0.82);
+}
+function checkFill(){
+  if(fAnswered) return;
+  const q=fQs[fQIdx];
+  const val=document.getElementById('fInput').value.trim().toLowerCase();
+  if(!val) return;
+  fAnswered=true;
+  const fb=document.getElementById('fFeedback');
+  fb.classList.remove('hidden');
+  document.getElementById('fInput').disabled=true;
+  if(val===q.correct.toLowerCase()){
+    levelScore++; levelStreak++;
+    document.getElementById('fScoreDisplay').textContent=`Score: ${levelScore}`;
+    document.getElementById('fStreakDisplay').textContent=`🔥 ${levelStreak}`;
+    document.getElementById('fInput').className='fill-input correct-input';
+    fb.textContent=`✅ "${q.correct}" is correct! 🌽`;
+    fb.className='text-center text-xl font-bold fredoka text-green-700';
+    plantCrop('f');
+    speak(`Correct! The answer is ${q.correct}`,1.0);
+  } else {
+    levelStreak=0;
+    document.getElementById('fStreakDisplay').textContent=`🔥 0`;
+    document.getElementById('fInput').className='fill-input wrong-input';
+    fb.textContent=`❌ Answer: "${q.correct}" — ${q.hint}`;
+    fb.className='text-center text-lg font-bold fredoka text-red-700';
+    dryCell('f');
+    speak(`The correct answer is ${q.correct}. ${q.hint}`,0.9);
+  }
+  setTimeout(()=>{fQIdx++;loadFQ();},2500);
+}
+function showFillHint(){
+  if(fHintShown) return;
+  fHintShown=true;
+  const q=fQs[fQIdx];
+  document.getElementById('fHintText').textContent=`💡 Hint: ${q.hint}`;
+}
+function endFill(){showScore('fillblank',levelScore,fQs.length);}
+
+// ============================================================
+// WORD SORT GAME
+// ============================================================
+let sRoundIdx=0, sSortAnswers={}, sSortCorrect={};
+function initSort(){
+  sRoundIdx=0;
+  document.getElementById('sLevelBadge').textContent=`Lv.${currentLevel}`;
+  document.getElementById('sScoreDisplay').textContent=`Score: 0`;
+  document.getElementById('sFeedback').classList.add('hidden');
+  loadSortRound();
+}
+function getSortRound(level){
+  const idx=(level-1)%sortRounds.length;
+  return sortRounds[idx];
+}
+function loadSortRound(){
+  const round=getSortRound(currentLevel);
+  document.getElementById('sSortInstruction').textContent=round.instruction;
+  document.getElementById('sQNum').textContent=`Round ${sRoundIdx+1}/3`;
+  document.getElementById('sProgress').style.width=`${(sRoundIdx/3)*100}%`;
+  document.getElementById('sFeedback').classList.add('hidden');
+  sSortAnswers={};
+  sSortCorrect=round.answers;
+  round.buckets.forEach(b=>sSortAnswers[b]=[]);
+  // Build word bank
+  const wb=document.getElementById('sWordBank');
+  wb.innerHTML='';
+  const words=shuffle(round.words);
+  words.forEach(w=>{
+    const el=document.createElement('span');
+    el.className='sort-word';
+    el.textContent=w;
+    el.dataset.word=w;
+    el.onclick=()=>handleWordClick(w,el);
+    wb.appendChild(el);
+  });
+  // Build buckets
+  const bucketEl=document.getElementById('sBuckets');
+  bucketEl.innerHTML='';
+  bucketEl.className=`grid gap-4 grid-cols-1 ${round.buckets.length>=3?'md:grid-cols-2':'md:grid-cols-2'}`;
+  round.buckets.forEach(b=>{
+    const div=document.createElement('div');
+    div.innerHTML=`<p class="font-bold text-amber-900 mb-2 text-center fredoka text-lg">${b}</p><div class="sort-bucket" id="bucket-${b.replace(/[^a-zA-Z0-9]/g,'_')}" data-bucket="${b}"></div>`;
+    bucketEl.appendChild(div);
+  });
+  speak(round.instruction,0.85);
+}
+let selectedWord=null, selectedEl=null;
+function handleWordClick(word,el){
+  if(el.classList.contains('placed')) return;
+  if(selectedEl===el){selectedEl.style.outline='';selectedEl=null;selectedWord=null;return;}
+  if(selectedEl) selectedEl.style.outline='';
+  selectedWord=word; selectedEl=el;
+  el.style.outline='3px solid #c0392b';
+}
+// Also handle bucket clicks
+document.addEventListener('click',e=>{
+  const bucket=e.target.closest('.sort-bucket');
+  if(bucket && selectedWord){
+    const bucketName=bucket.dataset.bucket;
+    if(!bucketName) return;
+    // Move word to bucket
+    const wordEl=selectedEl;
+    wordEl.style.outline='';
+    wordEl.classList.add('placed');
+    const copy=document.createElement('span');
+    copy.className='sort-word text-sm';
+    copy.textContent=selectedWord;
+    copy.style.cursor='pointer';
+    copy.dataset.word=selectedWord;
+    copy.onclick=()=>returnWordFromBucket(copy,bucketName,wordEl);
+    bucket.appendChild(copy);
+    // Track
+    if(!sSortAnswers[bucketName]) sSortAnswers[bucketName]=[];
+    sSortAnswers[bucketName].push(selectedWord);
+    selectedWord=null; selectedEl=null;
+  }
+});
+function returnWordFromBucket(copyEl,bucketName,origEl){
+  // Remove from bucket answers
+  sSortAnswers[bucketName]=sSortAnswers[bucketName].filter(w=>w!==copyEl.dataset.word);
+  copyEl.remove();
+  if(origEl){origEl.classList.remove('placed');}
+}
+function checkSort(){
+  const fb=document.getElementById('sFeedback');
+  fb.classList.remove('hidden');
+  let allCorrect=true;
+  const buckets=document.querySelectorAll('.sort-bucket');
+  buckets.forEach(b=>{
+    const name=b.dataset.bucket;
+    const userWords=[...b.querySelectorAll('.sort-word')].map(el=>el.dataset.word);
+    const correctWords=sSortCorrect[name]||[];
+    const isCorrect=userWords.length===correctWords.length&&userWords.every(w=>correctWords.includes(w));
+    b.style.background=isCorrect?'rgba(74,124,89,.2)':'rgba(192,57,43,.15)';
+    b.style.borderColor=isCorrect?'#4a7c59':'#c0392b';
+    if(!isCorrect) allCorrect=false;
+  });
+  if(allCorrect){
+    levelScore++; levelStreak++;
+    document.getElementById('sScoreDisplay').textContent=`Score: ${levelScore}`;
+    fb.textContent='✅ Perfect sorting! Amazing harvest! 🌾';
+    fb.className='text-center text-xl font-bold fredoka text-green-700';
+    speak('Excellent! Perfect sort!',1.0);
+    setTimeout(()=>{
+      sRoundIdx++;
+      if(sRoundIdx>=3) showScore('wordsort',levelScore,3);
+      else loadSortRound();
+    },2000);
+  } else {
+    levelStreak=0;
+    fb.textContent='❌ Some words are in the wrong bucket. Check the red ones!';
+    fb.className='text-center text-lg font-bold fredoka text-red-700';
+    speak('Some words need to move. Check the highlighted buckets.',0.9);
+  }
+}
+
+// ============================================================
+// SCORE SCREEN
+// ============================================================
+function showScore(mode,score,total){
   showPage('score');
-  document.getElementById('finalScore').textContent = `${score}/${shuffledQs.length}`;
-  document.getElementById('gameProgress').style.width = '100%';
-
-  const pct = score / shuffledQs.length;
-  let emoji = '🌱', msg = 'Keep practicing, farmer! The harvest will come!';
-  if (pct >= 0.9) { emoji = '🏆'; msg = 'Amazing! A legendary harvest! 🎉'; }
-  else if (pct >= 0.7) { emoji = '🌽'; msg = 'Great job! A bountiful harvest! 🌾'; }
-  else if (pct >= 0.5) { emoji = '🥕'; msg = 'Good effort! Keep tending your farm! 🚜'; }
-
-  document.getElementById('scoreEmoji').textContent = emoji;
-  document.getElementById('scoreMessage').textContent = msg;
-  document.getElementById('finalScoreLabel').textContent = 'Points Harvested!';
-
+  document.getElementById('scoreGameMode').textContent={harvest:'🌽 Harvest Quiz',fillblank:'✍️ Fill the Barn',wordsort:'🌾 Word Sort'}[mode];
+  document.getElementById('finalScore').textContent=`${score}/${total}`;
+  document.getElementById('currentLevelLabel').textContent=currentLevel;
+  document.getElementById('levelProgress').style.width=`${(currentLevel/30)*100}%`;
+  const pct=score/total;
+  let emoji='🌱',msg='Keep practicing, farmer!';
+  if(pct>=0.9){emoji='🏆';msg='Amazing! A legendary harvest! 🎉';}
+  else if(pct>=0.7){emoji='🌽';msg='Great job! A bountiful harvest! 🌾';}
+  else if(pct>=0.5){emoji='🥕';msg='Good effort! Keep tending! 🚜';}
+  document.getElementById('scoreEmoji').textContent=emoji;
+  document.getElementById('scoreMessage').textContent=msg;
   // Stars
-  document.getElementById('star1').classList.toggle('lit', pct >= 0.4);
-  document.getElementById('star2').classList.toggle('lit', pct >= 0.7);
-  document.getElementById('star3').classList.toggle('lit', pct >= 0.9);
-
-  speak(msg, 0.9);
+  [['star1',.4],['star2',.7],['star3',.9]].forEach(([id,threshold])=>{
+    const el=document.getElementById(id);
+    el.classList.toggle('lit',pct>=threshold);
+  });
+  const nextBtn=document.getElementById('nextLevelBtn');
+  nextBtn.style.display=currentLevel<30?'inline-flex':'none';
+  speak(msg,0.9);
 }
 
-// Init
-showPage('home');
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded',()=>{
+  showPage('home');
+  // Set up harvest bag clicks
+  document.getElementById('hBagA').onclick=()=>pickHarvest('hBagA');
+  document.getElementById('hBagB').onclick=()=>pickHarvest('hBagB');
+});
 </script>
 </body>
 </html>
